@@ -36,7 +36,7 @@ public class DispositivoModel {
     private double saldo;
 
     @ManyToOne
-    @JoinColumn(name = "cliente_id", nullable = false)
+    @JoinColumn(name = "clienteId", nullable = false)
     private ClienteModel cliente;
 
     public UUID getId() { 

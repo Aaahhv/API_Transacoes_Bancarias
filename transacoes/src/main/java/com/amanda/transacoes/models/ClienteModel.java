@@ -27,7 +27,7 @@ public class ClienteModel{
     private String cpf;
 
     @Column(nullable = false)
-    private String num_conta;
+    private String numConta;
 
     @Column(nullable = false)
     private boolean ativo;
@@ -37,6 +37,17 @@ public class ClienteModel{
 
     @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DispositivoModel> dispositivos;
+
+    public ClienteModel() {
+    }
+
+    public ClienteModel(String nome, String cpf, String numConta, boolean ativo, double saldo) {
+        this.nome = nome;
+        this.cpf = cpf;
+        this.numConta = numConta;
+        this.ativo = ativo;
+        this.saldo = saldo;
+    }
 
     public UUID getId() {
         return id;
@@ -60,6 +71,14 @@ public class ClienteModel{
 
     public void setCpf(String cpf) {
         this.cpf = cpf;
+    }
+
+    public String getNumConta() {
+        return numConta;
+    }
+
+    public void setNumConta(String numConta) {
+        this.numConta = numConta;
     }
 
     public boolean getAtivo() {

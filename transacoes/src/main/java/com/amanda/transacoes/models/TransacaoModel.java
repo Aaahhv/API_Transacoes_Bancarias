@@ -24,10 +24,10 @@ public class TransacaoModel {
     private UUID id;
 
     @Column(nullable = false)
-    private String cc_origem;
+    private String ccOrigem;
 
     @Column(nullable = false)
-    private String cc_destino;
+    private String ccDestino;
 
     @Column(nullable = false)
     private String data;
@@ -39,7 +39,7 @@ public class TransacaoModel {
     private OperacaoEnum operacao;
 
     @Column(nullable = false)
-    private TransacaoEnum tipo_transacao;
+    private TransacaoEnum tipoTransacao;
 
     @Column(nullable = false)
     private SituacaoOperacaoEnum situacao;
