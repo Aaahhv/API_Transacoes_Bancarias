@@ -1,39 +1,49 @@
 package com.amanda.transacoes.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.amanda.transacoes.dtos.ClienteDto;
 import com.amanda.transacoes.models.ClienteModel;
 import com.amanda.transacoes.repositories.ClienteRepository;
+import com.amanda.transacoes.utils.CpfUtil;
+
 
 @Service
 public class ClienteService {
     
     @Autowired
-    private ClienteRepository usuarioRepository;
-    
-    // Criar ou atualizar um usuario
+    private ClienteRepository clienteRepository;    
 
-    public ClienteModel create(ClienteModel usuario) {
-        return usuarioRepository.save(usuario);
+    public ClienteModel create(ClienteDto clienteDto) {
+        CpfUtil.isValidCpf(clienteDto.getCpf());
+        
+        if(clienteDto.getNome().isEmpty() || clienteDto.getNome() == null){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O nome nao deve ser nulo ou vazio");
+        }
+        
+        ///GERAR NUMERO DA CONTA
+        ClienteModel cliente = new ClienteModel(clienteDto.getNome(), CpfUtil.formatsCpf(clienteDto.getCpf()), "1", true, 0);
+        return clienteRepository.save(cliente);
     }
+
 
     public List<ClienteModel> getAll() {
-        return usuarioRepository.findAll();
+        return clienteRepository.findAll();
     }
 
-    // Buscar usuario por ID
     public Optional<ClienteModel> getById(UUID id) {
-        return usuarioRepository.findById(id);
+        return clienteRepository.findById(id);
     }
 
-    // Deleta usuario por ID
-    public void deletarPorId(UUID id) {
-        usuarioRepository.deleteById(id);
+    public void deleteById(UUID id) {
+        clienteRepository.deleteById(id);
     }
 
 }

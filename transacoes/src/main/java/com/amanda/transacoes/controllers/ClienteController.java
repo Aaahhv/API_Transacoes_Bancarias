@@ -3,9 +3,9 @@ package com.amanda.transacoes.controllers;
 import com.amanda.transacoes.dtos.ClienteDto;
 import com.amanda.transacoes.models.ClienteModel;
 import com.amanda.transacoes.services.ClienteService;
+import com.amanda.transacoes.utils.CpfUtil;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,11 +30,8 @@ public class ClienteController {
 
     @PostMapping("/create")
     public ResponseEntity<ClienteModel> create(@RequestBody ClienteDto clienteDto) {
-        //NUMERO DA CONTA
-        //VALIDAR CPF
-        ClienteModel cliente = new ClienteModel(clienteDto.getNome(), clienteDto.getCpf(), "1", true, 0);
-        ClienteModel newCliente = clienteService.create(cliente);
-        return new ResponseEntity<>(newCliente, HttpStatus.CREATED);
+       ClienteModel newCliente = clienteService.create(clienteDto);
+       return new ResponseEntity<>(newCliente, HttpStatus.CREATED);
     }
 
     
