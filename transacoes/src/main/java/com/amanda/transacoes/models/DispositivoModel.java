@@ -20,20 +20,13 @@ public class DispositivoModel {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    //@Column(nullable = false)
-    //private UUID client_id;
-
     @Column(nullable = false)
     private LocalDateTime data_inclusao;
 
-    @Column(nullable = false)
-    private String num_conta;
+    private String descricao;
 
     @Column(nullable = false)
     private boolean ativo;
-
-    @Column(nullable = false)
-    private double saldo;
 
     @ManyToOne
     @JoinColumn(name = "clienteId", nullable = false)
@@ -55,15 +48,6 @@ public class DispositivoModel {
         this.data_inclusao = data_inclusao; 
     }
 
-    
-    public String getNum_conta() { 
-        return num_conta; 
-    }
-
-    public void setId(String num_conta) { 
-        this.num_conta = num_conta; 
-    }
-
     public boolean getAtivo() { 
         return ativo; 
     }
@@ -72,12 +56,12 @@ public class DispositivoModel {
         this.ativo = ativo; 
     }
 
-    public double getSaldo() { 
-        return saldo; 
+    public String geDescricao() { 
+        return descricao; 
     }
 
-    public void setSaldo(double saldo) { 
-        this.saldo = saldo; 
+    public void setDescricao(String descricao) { 
+        this.descricao = descricao; 
     }
 
     public ClienteModel getCliente() {

@@ -7,9 +7,14 @@ import org.springframework.web.server.ResponseStatusException;
 
 public class CpfUtil {
     
-    //private static final Pattern CPF_PATTERN = Pattern.compile("^\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}$ | ^\\d{11}$");
     private static final Pattern CPF_PATTERN = Pattern.compile("^\\d{11}$");
 
+    public static boolean isCpfNull(String cpf) {
+        if (cpf == null || cpf.isEmpty() || cpf.equals("string")) {
+            return true;
+        }
+        return false;
+    }
     
     public static String formatsCpf(String cpf) {
         cpf = cpf.replaceAll("[^\\d]", ""); //remove pontos e hífens
@@ -41,6 +46,7 @@ public class CpfUtil {
 
         return true;
     }
+
     private static int calculatesDigits(String base, int[] pesos) {
         int soma = 0;
         for (int i = 0; i < base.length(); i++) {

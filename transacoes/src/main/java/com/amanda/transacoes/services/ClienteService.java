@@ -13,7 +13,7 @@ import com.amanda.transacoes.dtos.ClienteDto;
 import com.amanda.transacoes.models.ClienteModel;
 import com.amanda.transacoes.repositories.ClienteRepository;
 import com.amanda.transacoes.utils.CpfUtil;
-
+import com.amanda.transacoes.utils.NomeUtil;
 
 @Service
 public class ClienteService {
@@ -24,6 +24,10 @@ public class ClienteService {
     public ClienteModel create(ClienteDto clienteDto) {
         CpfUtil.isValidCpf(clienteDto.getCpf());
         
+        if(clienteRepository.existsByCpf(CpfUtil.formatsCpf(clienteDto.getCpf()))){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Esse cpf ja esta cadastrado no sistema");
+        }
+
         if(clienteDto.getNome().isEmpty() || clienteDto.getNome() == null){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O nome nao deve ser nulo ou vazio");
         }
@@ -42,8 +46,46 @@ public class ClienteService {
         return clienteRepository.findById(id);
     }
 
+    public Optional<ClienteModel> getByCpf(String cpf) {
+        return clienteRepository.findByCpf(cpf);
+    }
+
+    public ClienteModel update(ClienteDto clienteDto, UUID id) {
+        ClienteModel cliente = clienteRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado"));
+        
+        if(!NomeUtil.isNomeNull(clienteDto.getNome())){
+            cliente.setNome(clienteDto.getNome());
+        }
+        
+        if(!CpfUtil.isCpfNull(clienteDto.getCpf())){
+            CpfUtil.isValidCpf(clienteDto.getCpf());
+            
+            clienteDto.setCpf(CpfUtil.formatsCpf(clienteDto.getCpf()));
+
+            if(clienteRepository.existsByCpf(clienteDto.getCpf()) ){
+                if(!clienteRepository.findByCpf(clienteDto.getCpf()).get().getId().equals(id)){
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Esse cpf ja esta cadastrado no sistema");
+                }
+            }
+
+            cliente.setCpf(clienteDto.getCpf());
+        }
+
+        return clienteRepository.save(cliente);
+    }
+
     public void deleteById(UUID id) {
+        if (!clienteRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado");
+        }
         clienteRepository.deleteById(id);
     }
 
+    public Optional<ClienteModel> ativar(UUID id, boolean ativo) {
+        ClienteModel cliente = clienteRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado"));
+        cliente.setAtivo(ativo);
+        clienteRepository.save(cliente);
+
+        return clienteRepository.findById(id);
+    }
 }

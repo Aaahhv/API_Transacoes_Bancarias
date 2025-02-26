@@ -3,7 +3,6 @@ package com.amanda.transacoes.controllers;
 import com.amanda.transacoes.dtos.ClienteDto;
 import com.amanda.transacoes.models.ClienteModel;
 import com.amanda.transacoes.services.ClienteService;
-import com.amanda.transacoes.utils.CpfUtil;
 
 import java.util.List;
 import java.util.UUID;
@@ -16,8 +15,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @RestController
@@ -28,14 +30,13 @@ public class ClienteController {
     @Autowired
     private ClienteService clienteService;
 
-    @PostMapping("/create")
+    @PostMapping("/")
     public ResponseEntity<ClienteModel> create(@RequestBody ClienteDto clienteDto) {
        ClienteModel newCliente = clienteService.create(clienteDto);
        return new ResponseEntity<>(newCliente, HttpStatus.CREATED);
     }
-
     
-    @GetMapping("/read")
+    @GetMapping("/")
      public ResponseEntity<List<ClienteModel>> read() {
         List<ClienteModel> clientes = clienteService.getAll();
         return ResponseEntity.ok(clientes);
@@ -44,24 +45,23 @@ public class ClienteController {
     @GetMapping("/id")
     public ResponseEntity<ClienteModel> get(UUID id) {
         return ResponseEntity.of(clienteService.getById(id));
-        
-        /*Optional<ClienteModel> cliente = clienteService.getById(id);
-        if (cliente.isPresent()) {
-            return new ResponseEntity<>(cliente, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }*/
+    }
+
+   @PutMapping("/")
+    public ResponseEntity<ClienteModel> update(@RequestBody ClienteDto clienteDto, UUID id) {
+        ClienteModel cliente = clienteService.update(clienteDto, id);
+        return new ResponseEntity<>(cliente, HttpStatus.OK);
    }
 
-    //updateNome
+   @DeleteMapping("/")
+   public ResponseEntity<Void> delete(UUID id) {
+        clienteService.deleteById(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+  }
 
-    //updateCpf
-
-    //delete
-
-    //PATCH
-    //inactivate
-
-
+    @PatchMapping("/id/ativo")
+    public ResponseEntity<ClienteModel> ativo(UUID id, boolean ativo) {
+        return ResponseEntity.of(clienteService.ativar(id, ativo));
+    }
 
 }
