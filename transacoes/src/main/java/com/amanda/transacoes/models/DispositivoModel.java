@@ -2,7 +2,11 @@ package com.amanda.transacoes.models;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
- 
+
+import org.hibernate.annotations.CreationTimestamp;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -14,23 +18,33 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "Dispositivos")
-
 public class DispositivoModel {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @Column(nullable = false)
-    private LocalDateTime data_inclusao;
+    @JsonIgnore
+    @ManyToOne
+    @JoinColumn(name = "clienteId", nullable = false)
+    private ClienteModel cliente;
 
+    @CreationTimestamp
+    private LocalDateTime dataInclusao;
+
+    @Column(nullable = false)
     private String descricao;
 
     @Column(nullable = false)
     private boolean ativo;
 
-    @ManyToOne
-    @JoinColumn(name = "clienteId", nullable = false)
-    private ClienteModel cliente;
+    public DispositivoModel() {
+    }
+
+    public DispositivoModel(String descricao, boolean ativo, ClienteModel cliente) {
+        this.descricao = descricao;
+        this.ativo = ativo;
+        this.cliente = cliente;
+    }
 
     public UUID getId() { 
         return id; 
@@ -40,12 +54,12 @@ public class DispositivoModel {
         this.id = id; 
     }
 
-    public LocalDateTime getData_inclusao() { 
-        return data_inclusao; 
+    public LocalDateTime getdataInclusao() { 
+        return dataInclusao; 
     }
 
-    public void setData_inclusao(LocalDateTime data_inclusao) { 
-        this.data_inclusao = data_inclusao; 
+    public void setdataInclusao(LocalDateTime dataInclusao) { 
+        this.dataInclusao = dataInclusao; 
     }
 
     public boolean getAtivo() { 
@@ -56,7 +70,7 @@ public class DispositivoModel {
         this.ativo = ativo; 
     }
 
-    public String geDescricao() { 
+    public String getDescricao() { 
         return descricao; 
     }
 

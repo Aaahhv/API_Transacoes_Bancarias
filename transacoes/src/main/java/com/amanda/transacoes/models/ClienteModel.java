@@ -3,6 +3,8 @@ package com.amanda.transacoes.models;
 import java.util.List;
 import java.util.UUID;
 
+//import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -36,6 +38,7 @@ public class ClienteModel{
     private double saldo;
 
     @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, orphanRemoval = true)
+    //@JsonIgnore
     private List<DispositivoModel> dispositivos;
 
     public ClienteModel() {

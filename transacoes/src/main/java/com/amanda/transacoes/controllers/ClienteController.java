@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @RestController
 @RequestMapping (value = "/cliente", produces = {"application/json"})
-@Tag(name = "transacoes-bancarias", description = "API de transações bancárias")
+@Tag(name = "Rotas de Cliente", description = "API de transações bancárias")
 public class ClienteController {
     
     @Autowired
