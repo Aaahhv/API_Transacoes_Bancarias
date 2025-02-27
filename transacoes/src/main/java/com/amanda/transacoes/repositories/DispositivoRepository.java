@@ -8,9 +8,6 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-//import org.springframework.data.rest.core.annotation.RepositoryRestResource;
-//@RepositoryRestResource(exported = false) // Desativa os endpoints para este repositório
-
 @Repository
 public interface DispositivoRepository extends JpaRepository<DispositivoModel, UUID> {
  

@@ -1,7 +1,7 @@
 package com.amanda.transacoes.enums;
 
-public enum TransacaoEnum {
-    Deposito,
+public enum TipoOperacaoEnum {
+    DEPOSITO,
     SAQUE, 
     PIX,
     TED,

@@ -7,6 +7,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.UUID;
 
 import com.amanda.transacoes.dtos.ClienteDto;
@@ -35,11 +36,18 @@ public class ClienteService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O nome nao deve ser nulo ou vazio");
         }
         
-        ///GERAR NUMERO DA CONTA
-        ClienteModel cliente = new ClienteModel(clienteDto.getNome(), CpfUtil.formatsCpf(clienteDto.getCpf()), "1", true, 0);
+        ClienteModel cliente = new ClienteModel(clienteDto.getNome(), CpfUtil.formatsCpf(clienteDto.getCpf()), gerarNumConta(), true, 0);
         return clienteRepository.save(cliente);
     }
-
+    
+    public String gerarNumConta() {
+        Random random = new Random();
+        int numConta = 159000;
+        do {
+            numConta = 159000 + (random.nextInt(1000)); 
+        } while (clienteRepository.existsByNumConta(String.valueOf(numConta))); 
+        return String.valueOf(numConta);
+    }
 
     public List<ClienteModel> getAll() {
         return clienteRepository.findAll();
@@ -92,4 +100,22 @@ public class ClienteService {
         
         return clienteRepository.save(cliente);
     }
+
+    public ClienteModel depositar(String numConta, double valor) {
+        ClienteModel cliente = clienteRepository.findByNumConta(numConta).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Numero de conta "+ numConta + " não encontrado"));
+        cliente.setSaldo(cliente.getSaldo() + valor);
+    
+        return clienteRepository.save(cliente);
+    }
+
+    public ClienteModel sacar(String numConta, double valor) {
+        ClienteModel cliente = clienteRepository.findByNumConta(numConta).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Numero de conta "+ numConta + " não encontrado"));
+        if(cliente.getSaldo() < valor){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Saldo insuficiente");
+        }
+        cliente.setSaldo(cliente.getSaldo() - valor);
+        
+        return clienteRepository.save(cliente);
+    }
+
 }
