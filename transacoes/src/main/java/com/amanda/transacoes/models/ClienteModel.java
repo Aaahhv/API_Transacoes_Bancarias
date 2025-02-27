@@ -1,17 +1,12 @@
 package com.amanda.transacoes.models;
 
-import java.util.List;
 import java.util.UUID;
 
-//import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table; 
 
 @Entity
@@ -36,10 +31,6 @@ public class ClienteModel{
 
     @Column(nullable = false)
     private double saldo;
-
-    @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, orphanRemoval = true)
-    //@JsonIgnore
-    private List<DispositivoModel> dispositivos;
 
     public ClienteModel() {
     }
@@ -98,14 +89,6 @@ public class ClienteModel{
 
     public void setSaldo(double saldo) {
         this.saldo = saldo;
-    }
-
-    public List<DispositivoModel> getDispositivos() {
-         return dispositivos; 
-    }
-
-    public void setDispositivos(List<DispositivoModel> dispositivos) {
-        this.dispositivos = dispositivos;
     }
 
 }

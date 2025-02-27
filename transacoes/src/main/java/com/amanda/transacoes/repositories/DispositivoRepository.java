@@ -19,4 +19,7 @@ public interface DispositivoRepository extends JpaRepository<DispositivoModel, U
     boolean existsById(UUID id);
 
     void deleteById (UUID id);
+
+    void deleteByClienteId(UUID id);
+
 }

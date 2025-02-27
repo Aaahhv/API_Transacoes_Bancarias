@@ -5,15 +5,11 @@ import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table; 
 
 @Entity
@@ -23,10 +19,8 @@ public class DispositivoModel {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @JsonIgnore
-    @ManyToOne
-    @JoinColumn(name = "clienteId", nullable = false)
-    private ClienteModel cliente;
+    @Column(nullable = false)
+    private UUID clienteId;
 
     @CreationTimestamp
     private LocalDateTime dataInclusao;
@@ -40,10 +34,10 @@ public class DispositivoModel {
     public DispositivoModel() {
     }
 
-    public DispositivoModel(String descricao, boolean ativo, ClienteModel cliente) {
+    public DispositivoModel(String descricao, boolean ativo, UUID clienteId) {
         this.descricao = descricao;
         this.ativo = ativo;
-        this.cliente = cliente;
+        this.clienteId = clienteId;
     }
 
     public UUID getId() { 
@@ -78,11 +72,11 @@ public class DispositivoModel {
         this.descricao = descricao; 
     }
 
-    public ClienteModel getCliente() {
-        return cliente; 
+    public UUID getClienteId() {
+        return clienteId; 
     }
-    public void setCliente(ClienteModel cliente) { 
-        this.cliente = cliente; 
+    public void setClienteId(UUID clienteId) { 
+        this.clienteId = clienteId; 
     }
 
 }

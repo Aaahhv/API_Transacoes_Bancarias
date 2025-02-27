@@ -19,7 +19,10 @@ import com.amanda.transacoes.utils.NomeUtil;
 public class ClienteService {
     
     @Autowired
-    private ClienteRepository clienteRepository;    
+    private ClienteRepository clienteRepository;
+
+    @Autowired
+    private DispositivoService dispositivoService;
 
     public ClienteModel create(ClienteDto clienteDto) {
         CpfUtil.isValidCpf(clienteDto.getCpf());
@@ -78,14 +81,15 @@ public class ClienteService {
         if (!clienteRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado");
         }
+
+        dispositivoService.deleteByClienteId(id);
         clienteRepository.deleteById(id);
     }
 
-    public Optional<ClienteModel> ativar(UUID id, boolean ativo) {
+    public ClienteModel ativar(UUID id, boolean ativo) {
         ClienteModel cliente = clienteRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado"));
         cliente.setAtivo(ativo);
-        clienteRepository.save(cliente);
-
-        return clienteRepository.findById(id);
+        
+        return clienteRepository.save(cliente);
     }
 }

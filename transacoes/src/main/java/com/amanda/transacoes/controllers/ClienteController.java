@@ -43,7 +43,7 @@ public class ClienteController {
     }
 
     @GetMapping("/id")
-    public ResponseEntity<ClienteModel> get(UUID id) {
+    public ResponseEntity<ClienteModel> readById(UUID id) {
         return ResponseEntity.of(clienteService.getById(id));
     }
 
@@ -61,7 +61,7 @@ public class ClienteController {
 
     @PatchMapping("/id/ativo")
     public ResponseEntity<ClienteModel> ativo(UUID id, boolean ativo) {
-        return ResponseEntity.of(clienteService.ativar(id, ativo));
+        return ResponseEntity.ok(clienteService.ativar(id, ativo));
     }
 
 }
