@@ -29,7 +29,6 @@ public class TransacaoModel {
     @Column(nullable = false)
     private String ccOrigem;
 
-    @Column(nullable = false)
     private String ccDestino;
 
     @CreationTimestamp

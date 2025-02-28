@@ -9,17 +9,17 @@ public class TransacaoDto {
     private String ccDestino;   
     private double valor;
     private OperacaoEnum operacao;
-    private TipoOperacaoEnum tipoTransacao;
+    private TipoOperacaoEnum tipoOperacao;
     
     public TransacaoDto() {
     }
 
-    public TransacaoDto(String ccOrigem, String ccDestino, double valor, OperacaoEnum operacao, TipoOperacaoEnum tipoTransacao) {
+    public TransacaoDto(String ccOrigem, String ccDestino, double valor, OperacaoEnum operacao, TipoOperacaoEnum tipoOperacao) {
         this.ccOrigem = ccOrigem;
         this.ccDestino = ccDestino;
         this.valor = valor;
         this.operacao = operacao;
-        this.tipoTransacao = tipoTransacao;
+        this.tipoOperacao = tipoOperacao;
     }
 
     public String getCcOrigem() {
@@ -54,11 +54,11 @@ public class TransacaoDto {
         this.operacao = operacao;
     }
 
-    public TipoOperacaoEnum getTipoTransacao() {
-        return tipoTransacao;
+    public TipoOperacaoEnum getTipoOperacao() {
+        return tipoOperacao;
     }
 
-    public void setTipoTransacao(TipoOperacaoEnum tipoTransacao) {
-        this.tipoTransacao = tipoTransacao;
+    public void setTipoOperacao(TipoOperacaoEnum tipoOperacao) {
+        this.tipoOperacao = tipoOperacao;
     }
 }

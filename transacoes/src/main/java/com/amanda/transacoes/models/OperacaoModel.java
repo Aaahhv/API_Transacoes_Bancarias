@@ -5,7 +5,6 @@ import java.util.UUID;
 
 import com.amanda.transacoes.enums.TipoOperacaoEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -22,7 +21,6 @@ public class OperacaoModel {
     
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private UUID id;
 
     @Column(unique = true, nullable = false)
@@ -54,21 +52,6 @@ public class OperacaoModel {
         this.horarioFim = horarioFim;
 
     }
-
-    public OperacaoModel(TipoOperacaoEnum tipo, boolean ativo) {
-        this.tipo = tipo;
-        this.ativo = ativo;  
-    }
-
-    
-    public OperacaoModel(TipoOperacaoEnum tipo, double taxa, boolean ativo, double limiteValor) {
-        this.tipo = tipo;
-        this.taxa = taxa;
-        this.ativo = ativo; 
-        this.limiteValor = limiteValor; 
-    }
-
-
 
     public UUID getId() {
         return id;

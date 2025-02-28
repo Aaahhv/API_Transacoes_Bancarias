@@ -101,21 +101,29 @@ public class ClienteService {
         return clienteRepository.save(cliente);
     }
 
-    public ClienteModel depositar(String numConta, double valor) {
+    public ClienteModel debitar(String numConta, double valor, double taxa) {
         ClienteModel cliente = clienteRepository.findByNumConta(numConta).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Numero de conta "+ numConta + " não encontrado"));
-        cliente.setSaldo(cliente.getSaldo() + valor);
+        
+        if(cliente.getSaldo() < (valor+taxa)){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Saldo insuficiente");
+        }
+        cliente.setSaldo((cliente.getSaldo() - valor) - taxa);
     
         return clienteRepository.save(cliente);
     }
 
-    public ClienteModel sacar(String numConta, double valor) {
+    public ClienteModel creditar(String numConta, double valor, double taxa) {
         ClienteModel cliente = clienteRepository.findByNumConta(numConta).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Numero de conta "+ numConta + " não encontrado"));
-        if(cliente.getSaldo() < valor){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Saldo insuficiente");
-        }
-        cliente.setSaldo(cliente.getSaldo() - valor);
+        
+        cliente.setSaldo((cliente.getSaldo() + valor) - taxa);
         
         return clienteRepository.save(cliente);
+    }
+
+    public boolean isClienteAtivo(String numConta) {
+        ClienteModel cliente = clienteRepository.findByNumConta(numConta).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Numero de conta "+ numConta + " não encontrado"));
+        
+        return cliente.getAtivo();
     }
 
 }
