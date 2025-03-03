@@ -35,7 +35,6 @@ public class CpfUtil {
         int primeiroDigito = calculatesDigits(cpf.substring(0, 9), pesos1);
         int segundoDigito = calculatesDigits(cpf.substring(0, 10), pesos2);
 
-        //return cpf.equals(cpf.substring(0, 9) + primeiroDigito + segundoDigito);
         return cpf.endsWith(String.valueOf(primeiroDigito) + segundoDigito);
     }
 

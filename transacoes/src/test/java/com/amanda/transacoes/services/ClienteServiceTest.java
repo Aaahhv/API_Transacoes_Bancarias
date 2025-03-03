@@ -95,7 +95,7 @@ class ClienteServiceTest {
             clienteService.create(clienteDtoInvalido)
         );
     
-        assertEquals("400 BAD_REQUEST \"Formato de CPF invalido, o CPF deve ter 11 numeros\"", exception.getMessage());
+        assertEquals("400 BAD_REQUEST \"Formato de CPF invalido, o CPF deve ter 11 numeros.\"", exception.getMessage());
     }
 
     @Test
@@ -146,10 +146,11 @@ class ClienteServiceTest {
     }
 
     @Test
-    void update_ExcecaoCpfInvalido() {
+    void update_ExcecaoCpfDigitosIguais() {
         ClienteDto clienteDtoInvalido = new ClienteDto("Amanda Souza", "11111111119"); // CPF inválido
 
         when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
+        
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
             clienteService.update(clienteDtoInvalido, clienteId)
@@ -172,6 +173,31 @@ class ClienteServiceTest {
         );
 
         assertEquals("400 BAD_REQUEST \"O CPF já está cadastrado no sistema.\"", exception.getMessage());
+    }
+
+    @Test
+    void update_ExcecaoFormatoCpfInvalido() {
+        clienteDto = new ClienteDto("Amanda Souza", "591.447-026");
+
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
+            clienteService.update(clienteDto, clienteId)
+        );
+
+        assertEquals("400 BAD_REQUEST \"Formato de CPF invalido, o CPF deve ter 11 numeros.\"", exception.getMessage());
+    }
+
+    @Test
+    void update_ExcecaoDigitosVerificadoresInvalidos() {
+        clienteDto = new ClienteDto("Amanda Souza", "591.447.123-26");
+
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
+            clienteService.update(clienteDto, clienteId)
+        );
+
+        assertEquals("400 BAD_REQUEST \"CPF inválido, dígitos verificadores não conferem.\"", exception.getMessage());
     }
 
     @Test
@@ -203,8 +229,11 @@ class ClienteServiceTest {
     }
     //======================= UPDATE FINALIZADO  aqui pra cima ta tudo certo
 
+
+
+
     @Test
-    void getAll_DeveRetornarListaDeClientes() {
+    void getAll_ListaDeClientes() {
         List<ClienteModel> listaClientes = Arrays.asList(cliente);
         when(clienteRepository.findAll()).thenReturn(listaClientes);
 
@@ -215,17 +244,29 @@ class ClienteServiceTest {
     }
 
     @Test
-    void getById_DeveRetornarClienteQuandoExistente() {
+    void getById_ClienteExiste() {
         when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
 
         Optional<ClienteModel> resultado = clienteService.getById(clienteId);
 
         assertTrue(resultado.isPresent());
         assertEquals(clienteId, resultado.get().getId());
+
     }
 
     @Test
-    void getByCpf_DeveRetornarClienteQuandoCpfExistente() {
+    void getById_ClienteNaoExiste() {
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.empty());
+    
+        Optional<ClienteModel> resultado = clienteService.getById(clienteId);
+    
+        assertFalse(resultado.isPresent());
+    }
+    
+            //================================== aqui pra baixo ta tudo certo
+
+    @Test
+    void getByCpf_CpfExistente() {
         when(clienteRepository.findByCpf(cliente.getCpf())).thenReturn(Optional.of(cliente));
 
         Optional<ClienteModel> resultado = clienteService.getByCpf(cliente.getCpf());
@@ -235,7 +276,16 @@ class ClienteServiceTest {
     }
 
     @Test
-    void deleteById_DeveRemoverClienteQuandoIdExistente() {
+    void getByCpf_CpfNaoExiste() {
+        when(clienteRepository.findByCpf("000.000.000-00")).thenReturn(Optional.empty());
+
+        Optional<ClienteModel> resultado = clienteService.getByCpf("000.000.000-00");
+
+        assertFalse(resultado.isPresent());
+    }
+
+    @Test
+    void deleteById_ClienteExiste() {
         when(clienteRepository.existsById(clienteId)).thenReturn(true);
         doNothing().when(clienteRepository).deleteById(clienteId);
 
@@ -244,7 +294,18 @@ class ClienteServiceTest {
     }
 
     @Test
-    void ativar_DeveAlterarStatusAtivoDoCliente() {
+    void deleteById_DExcecaoClienteNaoExiste() {
+        when(clienteRepository.existsById(clienteId)).thenReturn(false);
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
+            clienteService.deleteById(clienteId)
+        );
+
+        assertEquals("404 NOT_FOUND \"Cliente não encontrado.\"", exception.getMessage());
+    }
+
+    @Test
+    void ativar_AtivarClienteExiste() {
         when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
         when(clienteRepository.save(any(ClienteModel.class))).thenReturn(cliente);
 
@@ -254,8 +315,59 @@ class ClienteServiceTest {
         verify(clienteRepository).save(any(ClienteModel.class));
     }
 
+    @Test
+    void ativar_DesativarClienteExiste() {
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
+        when(clienteRepository.save(any(ClienteModel.class))).thenReturn(cliente);
 
-    //================================== DEBITAR E CREDITAR FINALIZADO aqui pra baixo ta tudo certo
+        ClienteModel resultado = clienteService.ativar(clienteId, false);
+
+        assertFalse(resultado.getAtivo());
+        verify(clienteRepository).save(cliente);
+    }
+
+    @Test
+    void ativar_ExcecaoClienteNaoEncontrado() {
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
+            clienteService.ativar(clienteId, true)
+        );
+
+        assertEquals("404 NOT_FOUND \"Cliente não encontrado.\"", exception.getMessage());
+    }
+
+    @Test
+    void isCpfValido_CpfValido() {
+        assertDoesNotThrow(() -> clienteService.isCpfValido("52998224725")); // CPF real válido
+    }
+
+    @Test
+    void isCpfValido_FormatoInvalido() {
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
+            clienteService.isCpfValido("123A567890") // Contém letra e tem menos de 11 números
+        );
+
+        assertEquals("400 BAD_REQUEST \"Formato de CPF invalido, o CPF deve ter 11 numeros.\"", exception.getMessage());
+    }
+
+    @Test
+    void isCpfValido_ExcecaoTodosDigitosIguais() {
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
+            clienteService.isCpfValido("11111111111") // Todos os dígitos são iguais
+        );
+
+        assertEquals("400 BAD_REQUEST \"CPF invalido, todos os digitos sao iguais.\"", exception.getMessage());
+    }
+
+    @Test
+    void isCpfValido_ExcecaoDigitosVerificadoresInvalidos() {
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
+            clienteService.isCpfValido("52998224720") // CPF inválido com erro nos dígitos verificadores
+        );
+
+        assertEquals("400 BAD_REQUEST \"CPF inválido, dígitos verificadores não conferem.\"", exception.getMessage());
+    }
 
     @Test
     void debitar_DebitarSaldoValido() {
@@ -291,7 +403,7 @@ class ClienteServiceTest {
     
 
     @Test
-    void creditar_DeveAdicionarSaldo() {
+    void creditar_ContaValida() {
         when(clienteRepository.findByNumConta(cliente.getNumConta())).thenReturn(Optional.of(cliente));
         when(clienteRepository.save(any(ClienteModel.class))).thenReturn(cliente);
 

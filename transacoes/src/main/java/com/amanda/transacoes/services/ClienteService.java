@@ -72,8 +72,8 @@ public class ClienteService {
         }
         
         if(!CpfUtil.isCpfNullOrEmpty(clienteDto.getCpf())){
-            isCpfValido(clienteDto.getCpf());
-            
+
+            isCpfValido(clienteDto.getCpf());   
             clienteDto.setCpf(CpfUtil.formatsCpf(clienteDto.getCpf()));
 
             if(clienteRepository.existsByCpf(clienteDto.getCpf()) ){
@@ -90,7 +90,7 @@ public class ClienteService {
 
     public void isCpfValido(String cpf){
         if(!CpfUtil.isFormatoValido(cpf)){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Formato de CPF invalido, o CPF deve ter 11 numeros");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Formato de CPF invalido, o CPF deve ter 11 numeros.");
         }
 
         if(CpfUtil.isTodosDigitosIguais(cpf)){
