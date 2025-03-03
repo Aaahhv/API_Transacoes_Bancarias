@@ -11,7 +11,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.amanda.transacoes.dtos.DispositivoDto;
 import com.amanda.transacoes.models.DispositivoModel;
-import com.amanda.transacoes.repositories.ClienteRepository;
 import com.amanda.transacoes.repositories.DispositivoRepository;
 
 import jakarta.transaction.Transactional;
@@ -21,21 +20,25 @@ public class DispositivoService {
     
     @Autowired
     private DispositivoRepository dispositivoRepository; 
-    
-    @Autowired
-    private ClienteRepository clienteRepository;
 
+    @Autowired
+    private ClienteService clienteService;
+    
     public DispositivoModel create(DispositivoDto dispositivoDto) {
-        if(dispositivoDto.getDescricao().isEmpty() || dispositivoDto.getDescricao() == null){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A descrição não deve ser nula ou vazia");
+        if(dispositivoDto.getDescricao() == null){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A descrição não deve ser nula.");
         }
-        
+
+        if(dispositivoDto.getDescricao().isEmpty()){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A descrição não deve ser vazia.");
+        }
+         
         if(dispositivoDto.getClienteId() == null){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O clienteID não deve ser nulo");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O clienteID não deve ser nulo.");
         }
         
-        if(!clienteRepository.existsById(dispositivoDto.getClienteId())){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado");
+        if(!clienteService.existsById(dispositivoDto.getClienteId())){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado.");
         }
          
         DispositivoModel dispositivo = new DispositivoModel(dispositivoDto.getDescricao(), true, dispositivoDto.getClienteId());
@@ -55,15 +58,15 @@ public class DispositivoService {
         
     public DispositivoModel update(DispositivoDto dispositivoDto, UUID id) {
         
-        DispositivoModel dispositivo = dispositivoRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Dispositivo não encontrado"));
+        DispositivoModel dispositivo = dispositivoRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Dispositivo não encontrado."));
         
         if(dispositivoDto.getDescricao() != null){
             dispositivo.setDescricao(dispositivoDto.getDescricao());
         }
 
         if(dispositivoDto.getClienteId() != null){
-            if(!clienteRepository.existsById(dispositivoDto.getClienteId())){
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado");
+            if(!clienteService.existsById(dispositivoDto.getClienteId())){
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado.");
             }
             dispositivo.setClienteId(dispositivoDto.getClienteId());
         }
@@ -75,7 +78,7 @@ public class DispositivoService {
     public void deleteById(UUID id) {
 
         if (!dispositivoRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Dispositivo não encontrado");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Dispositivo não encontrado.");
         }
 
         dispositivoRepository.deleteById(id);
@@ -92,7 +95,7 @@ public class DispositivoService {
         
     public DispositivoModel ativar(UUID id, boolean ativo) {
 
-        DispositivoModel dispositivo = dispositivoRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Dispositivo não encontrado"));
+        DispositivoModel dispositivo = dispositivoRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Dispositivo não encontrado."));
         dispositivo.setAtivo(ativo);
         
         return dispositivoRepository.save(dispositivo);

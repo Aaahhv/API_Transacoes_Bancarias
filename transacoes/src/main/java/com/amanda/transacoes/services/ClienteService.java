@@ -1,6 +1,7 @@
 package com.amanda.transacoes.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -23,6 +24,7 @@ public class ClienteService {
     private ClienteRepository clienteRepository;
 
     @Autowired
+    @Lazy //evita dependencia ciclina ente ClienteService e DispotividoService
     private DispositivoService dispositivoService;
 
     public ClienteModel create(ClienteDto clienteDto) {
@@ -44,11 +46,17 @@ public class ClienteService {
     
     public String gerarNumConta() {
         Random random = new Random();
-        //isso aqui vai travar o sistema quando existirem 1000 clientes............
         int numConta = 159000;
+        int maxTentativas = 1000; // Evita loop infinito
+        int tentativas = 0;
         do {
+            if (tentativas >= maxTentativas) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possível gerar um novo número de conta.");
+            }
             numConta = 159000 + (random.nextInt(1000)); 
+            tentativas ++;
         } while (clienteRepository.existsByNumConta(String.valueOf(numConta))); 
+
         return String.valueOf(numConta);
     }
 
@@ -62,6 +70,10 @@ public class ClienteService {
 
     public Optional<ClienteModel> getByCpf(String cpf) {
         return clienteRepository.findByCpf(cpf);
+    }
+
+    public boolean existsById(UUID id) {
+        return clienteRepository.existsById(id);
     }
 
     public ClienteModel update(ClienteDto clienteDto, UUID id) {

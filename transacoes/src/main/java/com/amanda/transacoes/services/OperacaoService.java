@@ -64,15 +64,15 @@ public class OperacaoService {
         OperacaoModel operacaoModel = operacaoRepository.findByTipo(operacaoDto.getTipo());
 
         if(operacaoModel == null){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Operação não encontrada");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Operação não encontrada.");
         }
 
         if(operacaoDto.getHorario().getHoraInicio().isAfter(operacaoDto.getHorario().getHoraFim())){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Horário de início não pode ser maior que horário de fim");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Horário de início não pode ser maior que horário de fim.");
         }
 
         if(operacaoDto.getTaxa() < 0){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Taxa não pode ser negativa");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A taxa não pode ser negativa.");
         }
         
         operacaoModel.setTaxa(operacaoDto.getTaxa());
@@ -94,6 +94,10 @@ public class OperacaoService {
         return operacaoRepository.findByTipo(tipo);
     }
 
+    public double getLimiteValor(TipoOperacaoEnum tipo){
+        OperacaoModel operacao = operacaoRepository.findByTipo(tipo);
+        return operacao.getLimiteValor();
+    }
     
     public double getTaxaOperacao(TipoOperacaoEnum tipo){
         OperacaoModel operacao = operacaoRepository.findByTipo(tipo);
