@@ -135,7 +135,6 @@ public class TransacaoService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Dispositivo inativo");
         }
 
-        
         // ?? validar se dispositivo pertence a conta de origem, se a conta de origem for do banco ?
         // ?? se a transacao tiver origem em outro banco, deve existir dispositivoId ?
 

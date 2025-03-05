@@ -40,7 +40,7 @@ class OperacaoServiceTest {
     }
 
     @Test
-    void testGetAll() {
+    void getAll() {
         when(operacaoRepository.findAll()).thenReturn(Arrays.asList(operacao));
 
         List<OperacaoModel> result = operacaoService.getAll();
@@ -50,7 +50,7 @@ class OperacaoServiceTest {
     }
 
     @Test
-    void testUpdate_Valido() {
+    void update_Valido() {
         OperacaoDto dto = new OperacaoDto(TipoOperacaoEnum.SAQUE, 10.0, false, 500.0, new HorarioDto(LocalTime.of(9, 0), LocalTime.of(17, 0)));
         when(operacaoRepository.findByTipo(TipoOperacaoEnum.SAQUE)).thenReturn(operacao);
         when(operacaoRepository.save(any())).thenReturn(operacao);
@@ -65,7 +65,7 @@ class OperacaoServiceTest {
     }
 
     @Test
-    void testUpdate_ValidoLimiteInfinito() {
+    void update_ValidoLimiteInfinito() {
         OperacaoDto dto = new OperacaoDto(TipoOperacaoEnum.SAQUE, 10.0, false, -500.0, new HorarioDto(LocalTime.of(9, 0), LocalTime.of(17, 0)));
         when(operacaoRepository.findByTipo(TipoOperacaoEnum.SAQUE)).thenReturn(operacao);
         when(operacaoRepository.save(any())).thenReturn(operacao);
@@ -80,7 +80,7 @@ class OperacaoServiceTest {
     }
 
     @Test
-    void testUpdate_ThrowsException_OperacaoNaoEncontrada() {
+    void update_ThrowsException_OperacaoNaoEncontrada() {
         OperacaoDto dto = new OperacaoDto(TipoOperacaoEnum.SAQUE, 10.0, true, 500.0, new HorarioDto(LocalTime.of(9, 0), LocalTime.of(17, 0)));
         when(operacaoRepository.findByTipo(TipoOperacaoEnum.SAQUE)).thenReturn(null);
 
@@ -88,7 +88,7 @@ class OperacaoServiceTest {
     }
 
     @Test
-    void testUpdate_ThrowsException_HorarioInvalido() {
+    void update_ThrowsException_HorarioInvalido() {
         OperacaoDto dto = new OperacaoDto(TipoOperacaoEnum.SAQUE, 10.0, true, 500.0, new HorarioDto(LocalTime.of(18, 0), LocalTime.of(8, 0)));
         when(operacaoRepository.findByTipo(TipoOperacaoEnum.SAQUE)).thenReturn(operacao);
 
@@ -96,7 +96,7 @@ class OperacaoServiceTest {
     }
 
     @Test
-    void testUpdate_ThrowsException_TaxaNegativa() {
+    void update_ThrowsException_TaxaNegativa() {
         OperacaoDto dto = new OperacaoDto(TipoOperacaoEnum.SAQUE, -5.0, true, 500.0, new HorarioDto(LocalTime.of(9, 0), LocalTime.of(17, 0)));
         when(operacaoRepository.findByTipo(TipoOperacaoEnum.SAQUE)).thenReturn(operacao);
 
@@ -104,44 +104,45 @@ class OperacaoServiceTest {
     }
 
     @Test
-    void testGetByTipo() {
+    void getByTipo() {
         when(operacaoRepository.findByTipo(TipoOperacaoEnum.SAQUE)).thenReturn(operacao);
         OperacaoModel result = operacaoService.getByTipo(TipoOperacaoEnum.SAQUE);
         assertEquals(operacao, result);
     }
 
     @Test
-    void testGetTaxaOperacao() {
+    void getTaxaOperacao() {
         when(operacaoRepository.findByTipo(TipoOperacaoEnum.SAQUE)).thenReturn(operacao);
         double taxa = operacaoService.getTaxaOperacao(TipoOperacaoEnum.SAQUE);
         assertEquals(5.0, taxa);
     }
 
     @Test
-    void testGetLimiteValor() {
+    void getLimiteValor() {
         when(operacaoRepository.findByTipo(TipoOperacaoEnum.SAQUE)).thenReturn(operacao);
         double limite = operacaoService.getLimiteValor(TipoOperacaoEnum.SAQUE);
         assertEquals(1000, limite);
     }
 
     @Test
-    void testIsOperacaoAtiva() {
+    void isOperacaoAtiva() {
         when(operacaoRepository.findByTipo(TipoOperacaoEnum.SAQUE)).thenReturn(operacao);
         assertTrue(operacaoService.isTipoDeOperacaoAtiva(TipoOperacaoEnum.SAQUE));
     }
 
     @Test
-    void testIsLimiteValorValido() {
+    void isLimiteValorValido() {
         when(operacaoRepository.findByTipo(TipoOperacaoEnum.SAQUE)).thenReturn(operacao);
         assertTrue(operacaoService.isLimiteValorValido(TipoOperacaoEnum.SAQUE, 500.0));
         assertFalse(operacaoService.isLimiteValorValido(TipoOperacaoEnum.SAQUE, 2000.0));
     }
 
     @Test
-    void testIsHorarioValido() {
+    void isHorarioValido() {
         when(operacaoRepository.findByTipo(TipoOperacaoEnum.SAQUE)).thenReturn(operacao);
         assertTrue(operacaoService.isHorarioValido(TipoOperacaoEnum.SAQUE, LocalTime.of(9, 0)));
         assertFalse(operacaoService.isHorarioValido(TipoOperacaoEnum.SAQUE, LocalTime.of(7, 0)));
         assertFalse(operacaoService.isHorarioValido(TipoOperacaoEnum.SAQUE, LocalTime.of(19, 0)));
     }
+
 }

@@ -434,5 +434,4 @@ class ClienteServiceTest {
 
         assertEquals("404 NOT_FOUND \"Número de conta 999999 não encontrado\"", exception.getMessage());
     }
-
 }

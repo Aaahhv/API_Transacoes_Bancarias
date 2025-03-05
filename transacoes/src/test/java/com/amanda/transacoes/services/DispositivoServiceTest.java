@@ -44,7 +44,7 @@ class DispositivoServiceTests {
     }
 
     @Test
-    void testCreate_CreateValico() {
+    void create_CreateValico() {
         when(clienteService.existsById(clienteId)).thenReturn(true);
         when(dispositivoRepository.save(any(DispositivoModel.class))).thenReturn(dispositivoModel);
 
@@ -58,7 +58,7 @@ class DispositivoServiceTests {
     }
 
     @Test
-    void testCreate_ExcessaoClienteNaoEncontrado() {
+    void create_ExcessaoClienteNaoEncontrado() {
         when(clienteService.existsById(clienteId)).thenReturn(false);
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
@@ -70,7 +70,7 @@ class DispositivoServiceTests {
     }
 
     @Test
-    void testCreate_ExcessaoDescricaoVazia() {
+    void create_ExcessaoDescricaoVazia() {
         dispositivoDto.setDescricao("");
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
@@ -82,7 +82,7 @@ class DispositivoServiceTests {
     
 
     @Test
-    void testCreate_ExcessaoDescricaoNula() {
+    void create_ExcessaoDescricaoNula() {
         dispositivoDto.setDescricao(null);
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
@@ -93,7 +93,7 @@ class DispositivoServiceTests {
     }
 
     @Test
-    void testCreate_ExcessaoClienteIdNulo() {
+    void create_ExcessaoClienteIdNulo() {
         dispositivoDto.setClienteId(null);
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
@@ -105,7 +105,7 @@ class DispositivoServiceTests {
 
 
     @Test
-    void testGetAll() {
+    void getAll() {
         List<DispositivoModel> lista = Arrays.asList(dispositivoModel);
         when(dispositivoRepository.findAll()).thenReturn(lista);
 
@@ -116,7 +116,7 @@ class DispositivoServiceTests {
     }
 
     @Test
-    void testGetById_Valido() {
+    void getById_Valido() {
         when(dispositivoRepository.findById(dispositivoId)).thenReturn(Optional.of(dispositivoModel));
 
         Optional<DispositivoModel> result = dispositivoService.getById(dispositivoId);
@@ -126,7 +126,7 @@ class DispositivoServiceTests {
     }
 
     @Test
-    void testGetById_NaoEncontrado() {
+    void getById_NaoEncontrado() {
         when(dispositivoRepository.findById(dispositivoId)).thenReturn(Optional.empty());
 
         Optional<DispositivoModel> result = dispositivoService.getById(dispositivoId);
@@ -135,7 +135,7 @@ class DispositivoServiceTests {
     }
 
     @Test
-    void testUpdate_DescricaoEClienteId() {
+    void update_DescricaoEClienteId() {
         when(dispositivoRepository.findById(dispositivoId)).thenReturn(Optional.of(dispositivoModel));
         when(clienteService.existsById(clienteId)).thenReturn(true);
         when(dispositivoRepository.save(any(DispositivoModel.class))).thenReturn(dispositivoModel);
@@ -149,7 +149,7 @@ class DispositivoServiceTests {
 
     
     @Test
-    void testUpdate_UpdateDescricao() {
+    void update_UpdateDescricao() {
         when(dispositivoRepository.findById(dispositivoId)).thenReturn(Optional.of(dispositivoModel));
         when(dispositivoRepository.save(any(DispositivoModel.class))).thenReturn(dispositivoModel);
 
@@ -162,7 +162,7 @@ class DispositivoServiceTests {
     } 
 
     @Test
-    void testUpdate_UpdateClienteId() {
+    void update_UpdateClienteId() {
         UUID novoClienteId = UUID.randomUUID();
         when(dispositivoRepository.findById(dispositivoId)).thenReturn(Optional.of(dispositivoModel));
         when(clienteService.existsById(novoClienteId)).thenReturn(true);
@@ -177,7 +177,7 @@ class DispositivoServiceTests {
     }
 
     @Test
-    void testUpdate_DispositivoNaoEncontrado() {
+    void update_DispositivoNaoEncontrado() {
         when(dispositivoRepository.findById(dispositivoId)).thenReturn(Optional.empty());
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
@@ -188,7 +188,7 @@ class DispositivoServiceTests {
     }
 
     @Test
-    void testUpdate_ExcessaoClienteIdNaoEncontrado() {
+    void update_ExcessaoClienteIdNaoEncontrado() {
         UUID novoClienteId = UUID.randomUUID();
         when(dispositivoRepository.findById(dispositivoId)).thenReturn(Optional.of(dispositivoModel));
         when(clienteService.existsById(novoClienteId)).thenReturn(false);
@@ -203,7 +203,7 @@ class DispositivoServiceTests {
     }
 
     @Test
-    void testDeleteById_Valido() {
+    void deleteById_Valido() {
         when(dispositivoRepository.existsById(dispositivoId)).thenReturn(true);
         doNothing().when(dispositivoRepository).deleteById(dispositivoId);
 
@@ -213,7 +213,7 @@ class DispositivoServiceTests {
     }
 
     @Test
-    void testDeleteById_DispositivoNaoEncontrado() {
+    void deleteById_DispositivoNaoEncontrado() {
         when(dispositivoRepository.existsById(dispositivoId)).thenReturn(false);
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
@@ -225,7 +225,7 @@ class DispositivoServiceTests {
     }
 
     @Test
-    void testAtivar_Valido() {
+    void ativar_Valido() {
         when(dispositivoRepository.findById(dispositivoId)).thenReturn(Optional.of(dispositivoModel));
         when(dispositivoRepository.save(any(DispositivoModel.class))).thenReturn(dispositivoModel);
 
@@ -236,7 +236,7 @@ class DispositivoServiceTests {
     }
 
     @Test
-    void testAtivar_DispositivoNaoEncontrado() {
+    void ativar_DispositivoNaoEncontrado() {
         when(dispositivoRepository.findById(dispositivoId)).thenReturn(Optional.empty());
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
@@ -247,11 +247,41 @@ class DispositivoServiceTests {
     }
 
     @Test
-    void testDeleteByClienteId_Valido() {
+    void deleteByClienteId_Valido() {
         doNothing().when(dispositivoRepository).deleteByClienteId(clienteId);
 
         dispositivoService.deleteByClienteId(clienteId);
 
         verify(dispositivoRepository, times(1)).deleteByClienteId(clienteId);
+    }
+
+    @Test
+    void existsById() {
+        UUID id = UUID.randomUUID();
+        when(dispositivoRepository.existsById(id)).thenReturn(true);
+
+        assertTrue(dispositivoService.existsById(id));
+        //assertTrue(dispositivoService.existsById(id));
+    }
+
+    @Test
+    void isDispositivoAtivo_DispositivoExiste() {
+        dispositivoModel.setAtivo(true);
+        when(dispositivoRepository.findById(dispositivoId)).thenReturn(Optional.of(dispositivoModel));
+
+        boolean result = dispositivoService.isDispositivoAtivo(dispositivoId);
+
+        assertTrue(result);
+    }
+
+    @Test
+    void isDispositivoAtivo_ExcessaoDispositivoNaoEncontrado() {
+        when(dispositivoRepository.findById(dispositivoId)).thenReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            dispositivoService.isDispositivoAtivo(dispositivoId);
+        });
+
+        assertEquals("Dispositivo não encontrado", exception.getReason());
     }
 }

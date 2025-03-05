@@ -35,7 +35,6 @@ public class ClienteService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O CPF já está cadastrado no sistema.");
         }
 
-
         if(NomeUtil.isNomeNullOrEmpty(clienteDto.getNome())){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O nome não deve ser vazio ou nulo.");
         }
@@ -93,7 +92,6 @@ public class ClienteService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O CPF já está cadastrado no sistema.");
                 }
             }
-
             cliente.setCpf(clienteDto.getCpf());
         }
 

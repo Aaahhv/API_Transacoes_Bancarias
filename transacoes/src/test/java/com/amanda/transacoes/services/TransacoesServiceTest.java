@@ -355,8 +355,6 @@ class TransacaoServiceTest {
         assertEquals("403 FORBIDDEN \"Dispositivo inativo\"", exception.getMessage());
     }
 
-
-
     @Test
     void getAll_RetornaListaDeTransacoes() {
         TransacaoModel transacao1 = new TransacaoModel("159001", "159002", 100.0, OperacaoEnum.CREDITO, TipoOperacaoEnum.PIX, SituacaoOperacaoEnum.CONCLUIDO, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4"));
