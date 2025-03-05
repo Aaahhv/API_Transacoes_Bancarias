@@ -63,7 +63,7 @@ public class TransacaoService {
         }
 
         if(!operacaoService.isLimiteValorValido(tipo,valor)){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Valor da transação excede o limite de " + operacaoService.getLimiteValor(tipo) + " do tipo de operacao " + tipo + ".");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O valor da transação excede o limite do tipo de operação.");
         }
     }
 
@@ -135,6 +135,7 @@ public class TransacaoService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Dispositivo inativo");
         }
 
+        
         // ?? validar se dispositivo pertence a conta de origem, se a conta de origem for do banco ?
         // ?? se a transacao tiver origem em outro banco, deve existir dispositivoId ?
 

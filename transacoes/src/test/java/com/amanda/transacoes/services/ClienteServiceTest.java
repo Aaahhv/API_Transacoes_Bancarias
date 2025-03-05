@@ -162,7 +162,6 @@ class ClienteServiceTest {
 
         ClienteModel resultado = clienteService.update(clienteDtoInvalido, clienteId);
 
-        // O nome não deve ter sido alterado
         assertEquals("Amanda Souza", resultado.getNome());
         verify(clienteRepository).save(any(ClienteModel.class));
     }
@@ -176,7 +175,6 @@ class ClienteServiceTest {
 
         ClienteModel resultado = clienteService.update(clienteDtoInvalido, clienteId);
 
-        // O CPF não deve ter sido alterado
         assertEquals("591.460.470-26", resultado.getCpf());
         verify(clienteRepository).save(any(ClienteModel.class));
     }
@@ -193,7 +191,6 @@ class ClienteServiceTest {
         assertEquals(clienteDto.getCpf(), resultado.getCpf());
         verify(clienteRepository).save(any(ClienteModel.class));
     }
-    
 
     @Test
     void getAll_ListaDeClientes() {
@@ -225,8 +222,6 @@ class ClienteServiceTest {
     
         assertFalse(resultado.isPresent());
     }
-    
-            //================================== aqui pra baixo ta tudo certo
 
     @Test
     void getByCpf_CpfExistente() {
