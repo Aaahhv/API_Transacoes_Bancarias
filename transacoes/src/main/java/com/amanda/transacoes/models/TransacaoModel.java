@@ -41,7 +41,7 @@ public class TransacaoModel {
     private OperacaoEnum operacao;
 
     @Column(nullable = false)
-    private TipoOperacaoEnum tipoTransacao;
+    private TipoOperacaoEnum tipoOperacao;
 
     @Column(nullable = false)
     private SituacaoOperacaoEnum situacao;
@@ -51,12 +51,12 @@ public class TransacaoModel {
     public TransacaoModel() {
     }
 
-    public TransacaoModel(String ccOrigem, String ccDestino, double valor, OperacaoEnum operacao, TipoOperacaoEnum tipoTransacao, SituacaoOperacaoEnum situacao, UUID dispositivoId) {
+    public TransacaoModel(String ccOrigem, String ccDestino, double valor, OperacaoEnum operacao, TipoOperacaoEnum tipoOperacao, SituacaoOperacaoEnum situacao, UUID dispositivoId) {
         this.ccOrigem = ccOrigem;
         this.ccDestino = ccDestino;
         this.valor = valor;
         this.operacao = operacao;
-        this.tipoTransacao = tipoTransacao;
+        this.tipoOperacao = tipoOperacao;
         //this.situacao = SituacaoOperacaoEnum.PENDENTE;
         this.situacao = situacao;
         this.dispositivoId = dispositivoId;
@@ -110,12 +110,12 @@ public class TransacaoModel {
         this.operacao = operacao;
     }
 
-    public TipoOperacaoEnum getTipoTransacao() {
-        return tipoTransacao;
+    public TipoOperacaoEnum getTipoOperacao() {
+        return tipoOperacao;
     }
 
-    public void setTipoTransacao(TipoOperacaoEnum tipoTransacao) {
-        this.tipoTransacao = tipoTransacao;
+    public void setTipoOperacao(TipoOperacaoEnum tipoOperacao) {
+        this.tipoOperacao = tipoOperacao;
     }
 
     public SituacaoOperacaoEnum getSituacao() {
