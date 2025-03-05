@@ -100,6 +100,17 @@ public class DispositivoService {
         
         return dispositivoRepository.save(dispositivo);
         }
+
+
+    public boolean existsById(UUID id){
+        return dispositivoRepository.existsById(id);
+    }
+
+    public boolean isDispositivoAtivo(UUID id) {
+        DispositivoModel dispositivo = dispositivoRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Dispositivo não encontrado"));
+        
+        return dispositivo.getAtivo();
+    }
 }
 
 

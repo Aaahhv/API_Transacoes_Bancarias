@@ -104,7 +104,7 @@ public class OperacaoService {
         return operacao.getTaxa();
     }
 
-    public boolean isOperacaoAtiva(TipoOperacaoEnum tipo){
+    public boolean isTipoDeOperacaoAtiva(TipoOperacaoEnum tipo){
         OperacaoModel operacao = operacaoRepository.findByTipo(tipo);
         return operacao.getAtivo();
     }

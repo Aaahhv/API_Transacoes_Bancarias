@@ -51,13 +51,15 @@ public class TransacaoModel {
     public TransacaoModel() {
     }
 
-    public TransacaoModel(String ccOrigem, String ccDestino, double valor, OperacaoEnum operacao, TipoOperacaoEnum tipoTransacao) {
+    public TransacaoModel(String ccOrigem, String ccDestino, double valor, OperacaoEnum operacao, TipoOperacaoEnum tipoTransacao, SituacaoOperacaoEnum situacao, UUID dispositivoId) {
         this.ccOrigem = ccOrigem;
         this.ccDestino = ccDestino;
         this.valor = valor;
         this.operacao = operacao;
         this.tipoTransacao = tipoTransacao;
-        this.situacao = SituacaoOperacaoEnum.PENDENTE;
+        //this.situacao = SituacaoOperacaoEnum.PENDENTE;
+        this.situacao = situacao;
+        this.dispositivoId = dispositivoId;
     }
 
     public UUID getId() {

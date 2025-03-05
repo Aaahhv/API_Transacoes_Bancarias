@@ -127,7 +127,7 @@ class OperacaoServiceTest {
     @Test
     void testIsOperacaoAtiva() {
         when(operacaoRepository.findByTipo(TipoOperacaoEnum.SAQUE)).thenReturn(operacao);
-        assertTrue(operacaoService.isOperacaoAtiva(TipoOperacaoEnum.SAQUE));
+        assertTrue(operacaoService.isTipoDeOperacaoAtiva(TipoOperacaoEnum.SAQUE));
     }
 
     @Test

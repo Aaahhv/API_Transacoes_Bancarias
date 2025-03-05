@@ -1,5 +1,7 @@
 package com.amanda.transacoes.dtos;
 
+import java.util.UUID;
+
 import com.amanda.transacoes.enums.OperacaoEnum;
 import com.amanda.transacoes.enums.TipoOperacaoEnum;
 
@@ -10,16 +12,18 @@ public class TransacaoDto {
     private double valor;
     private OperacaoEnum operacao;
     private TipoOperacaoEnum tipoOperacao;
+    private UUID dispositivoId;
     
     public TransacaoDto() {
     }
 
-    public TransacaoDto(String ccOrigem, String ccDestino, double valor, OperacaoEnum operacao, TipoOperacaoEnum tipoOperacao) {
+    public TransacaoDto(String ccOrigem, String ccDestino, double valor, OperacaoEnum operacao, TipoOperacaoEnum tipoOperacao, UUID dispositivoId) {
         this.ccOrigem = ccOrigem;
         this.ccDestino = ccDestino;
         this.valor = valor;
         this.operacao = operacao;
         this.tipoOperacao = tipoOperacao;
+        this.dispositivoId = dispositivoId;
     }
 
     public String getCcOrigem() {
@@ -61,4 +65,13 @@ public class TransacaoDto {
     public void setTipoOperacao(TipoOperacaoEnum tipoOperacao) {
         this.tipoOperacao = tipoOperacao;
     }
+
+    public UUID getDispositivoId(){
+        return dispositivoId;
+    }
+
+    public void setDispositivoId(UUID dispositivoId){
+        this.dispositivoId = dispositivoId;
+    }
+
 }
