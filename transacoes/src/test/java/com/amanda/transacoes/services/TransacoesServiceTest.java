@@ -10,6 +10,8 @@ import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
@@ -20,14 +22,11 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 import com.amanda.transacoes.dtos.TransacaoDto;
 import com.amanda.transacoes.enums.OperacaoEnum;
@@ -51,16 +50,20 @@ class TransacaoServiceTest {
     private TransacaoService transacaoService;
 
     private TransacaoDto transacaoDto;
+
+    private TransacaoDto transacaoDtoDebito;
+
     private TransacaoModel transacaoModel;
 
     @BeforeEach
     void setUp() {
         transacaoDto = new TransacaoDto("1590001", "1590002", 100.0, OperacaoEnum.CREDITO, TipoOperacaoEnum.PIX);
+        transacaoDtoDebito = new TransacaoDto("1590001", "1590002", 100.0, OperacaoEnum.DEBITO, TipoOperacaoEnum.TED);
         transacaoModel = new TransacaoModel("1590001", "1590002", 100.0, OperacaoEnum.CREDITO, TipoOperacaoEnum.PIX);
     }
 
     @Test
-    void create_DeveCriarTransacaoQuandoValida() {
+    void create_TransacaoCreditoValida() {
         TransacaoModel transacaoModel = new TransacaoModel("159001", "159002", 100.0, OperacaoEnum.CREDITO, TipoOperacaoEnum.PIX);
         when(transacaoRepository.save(any(TransacaoModel.class))).thenReturn(transacaoModel);
         when(operacaoService.isOperacaoAtiva(any())).thenReturn(true);
@@ -101,17 +104,6 @@ class TransacaoServiceTest {
         assertEquals("400 BAD_REQUEST \"Valor da transação excede o limite de 0.0 da operacao PIX.\"", exception.getMessage());
     }
 
-    /* 
-    @Test
-    void create_ExcessaoHorarioInvalido() {
-        when(operacaoService.isOperacaoAtiva(any())).thenReturn(true);
-        when(operacaoService.isLimiteValorValido(any(), anyDouble())).thenReturn(true);
-        when(operacaoService.isHorarioValido(any(), any())).thenReturn(false);
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () ->
-            transacaoService.create(transacaoDto));
-        assertEquals("400 BAD_REQUEST \"Horario inválido para a operação\"", exception.getMessage());
-    }*/
-
     @Test
     void create_ExcessaoHorarioInvalido() {
         when(operacaoService.isOperacaoAtiva(any())).thenReturn(true);
@@ -136,12 +128,50 @@ class TransacaoServiceTest {
     }
 
     @Test
+    void create_ExcessaoContaOrigemVazia() {
+        when(operacaoService.isOperacaoAtiva(any())).thenReturn(true);
+        when(operacaoService.isLimiteValorValido(transacaoDtoDebito.getTipoOperacao(), transacaoDtoDebito.getValor())).thenReturn(true);
+        when(operacaoService.isHorarioValido(any(),any())).thenReturn(true);
+        transacaoDtoDebito.setCcOrigem("");
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () ->
+            transacaoService.create(transacaoDtoDebito));
+        assertEquals("400 BAD_REQUEST \"A conta de origem não deve ser vazia.\"", exception.getMessage());
+    }
+
+    
+    @Test
+    void create_ExcessaoContaDestinoVazia() {
+        when(operacaoService.isOperacaoAtiva(any())).thenReturn(true);
+        when(operacaoService.isLimiteValorValido(transacaoDtoDebito.getTipoOperacao(), transacaoDtoDebito.getValor())).thenReturn(true);
+        when(operacaoService.isHorarioValido(any(),any())).thenReturn(true);
+        transacaoDtoDebito.setCcDestino("");
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () ->
+            transacaoService.create(transacaoDtoDebito));
+        assertEquals("400 BAD_REQUEST \"A conta de destino não deve ser vazia.\"", exception.getMessage());
+    }
+
+/*         
+    @Test
+    void create_ExcessaoContaOrigemIgualDestino() {
+        when(operacaoService.isOperacaoAtiva(any())).thenReturn(true);
+        when(operacaoService.isLimiteValorValido(transacaoDtoDebito.getTipoOperacao(), transacaoDtoDebito.getValor())).thenReturn(true);
+        when(operacaoService.isHorarioValido(any(),any())).thenReturn(true);
+        transacaoDtoDebito.setCcDestino("159001");
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () ->
+            transacaoService.create(transacaoDtoDebito));
+        assertEquals("Nao é possivel enviar TED para a mesma conta.\"", exception.getMessage());
+    } */
+
+    @Test
     void create_ExcessaoContaOrigemInativa() {
         when(operacaoService.isOperacaoAtiva(any())).thenReturn(true);
-        when(clienteService.isClienteAtivo(anyString())).thenReturn(false);
         when(operacaoService.isLimiteValorValido(transacaoDto.getTipoOperacao(), transacaoDto.getValor())).thenReturn(true);
         when(operacaoService.isHorarioValido(any(),any())).thenReturn(true);
-
+        when(clienteService.isClienteAtivo(anyString())).thenReturn(false);
+        
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () ->
             transacaoService.create(transacaoDto));
         assertEquals("400 BAD_REQUEST \"Conta de ORIGEM inativa.\"", exception.getMessage());
