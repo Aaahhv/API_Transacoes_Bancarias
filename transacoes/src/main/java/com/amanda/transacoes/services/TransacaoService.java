@@ -137,6 +137,7 @@ public class TransacaoService {
 
         // ?? validar se dispositivo pertence a conta de origem, se a conta de origem for do banco ?
         // ?? se a transacao tiver origem em outro banco, deve existir dispositivoId ?
+        // ?? se for SAQUE/DEPOSITO, o dispositvoID seria o id do caixa eletronico ?
 
     }
 
