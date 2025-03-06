@@ -261,7 +261,6 @@ class DispositivoServiceTests {
         when(dispositivoRepository.existsById(id)).thenReturn(true);
 
         assertTrue(dispositivoService.existsById(id));
-        //assertTrue(dispositivoService.existsById(id));
     }
 
     @Test
