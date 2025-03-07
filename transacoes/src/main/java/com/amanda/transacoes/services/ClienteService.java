@@ -87,11 +87,11 @@ public class ClienteService {
             isCpfValido(clienteDto.getCpf());   
             clienteDto.setCpf(CpfUtil.formatsCpf(clienteDto.getCpf()));
 
-            if(clienteRepository.existsByCpf(clienteDto.getCpf()) ){
-                if(!clienteRepository.findByCpf(clienteDto.getCpf()).get().getId().equals(id)){
+            ClienteModel clienteByCpf = clienteRepository.findByCpf(clienteDto.getCpf()).orElse(null);
+            if (clienteByCpf != null && !clienteByCpf.getId().equals(id)) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O CPF já está cadastrado no sistema.");
-                }
             }
+
             cliente.setCpf(clienteDto.getCpf());
         }
 
@@ -113,8 +113,11 @@ public class ClienteService {
     }
 
     public void deleteById(UUID id) {
-        if (!clienteRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado.");
+
+        ClienteModel clienteByCpf = clienteRepository.findById(id).orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado."));
+
+        if(clienteByCpf.getSaldo() != 0){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O cliente não pode ser deletado porque ainda possui saldo em conta.");
         }
 
         dispositivoService.deleteByClienteId(id);

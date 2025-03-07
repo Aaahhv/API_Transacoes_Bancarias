@@ -44,6 +44,7 @@ class ClienteServiceTest {
     private ClienteService clienteService;
 
     private ClienteModel cliente;
+    private ClienteModel clienteZeroSaldo;
     private ClienteDto clienteDto;
     private UUID clienteId;
 
@@ -52,6 +53,7 @@ class ClienteServiceTest {
         clienteId = UUID.randomUUID();
         clienteDto = new ClienteDto("Amanda Souza", "591.46047-026");
         cliente = new ClienteModel("Amanda Souza", "591.460.470-26", "159001", true, 1000.0);
+        clienteZeroSaldo = new ClienteModel("Amanda Souza", "596.764.010-05", "159002", true, 0.0);
         cliente.setId(clienteId);
     }
 
@@ -115,7 +117,6 @@ class ClienteServiceTest {
     @Test
     void update_ClienteValido() {
         when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
-        when(clienteRepository.existsByCpf(anyString())).thenReturn(false);
         when(clienteRepository.save(any(ClienteModel.class))).thenReturn(cliente);
 
         ClienteModel resultado = clienteService.update(clienteDto, clienteId);
@@ -143,7 +144,6 @@ class ClienteServiceTest {
         outroCliente.setId(UUID.randomUUID());
 
         when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
-        when(clienteRepository.existsByCpf(anyString())).thenReturn(true);
         when(clienteRepository.findByCpf(anyString())).thenReturn(Optional.of(outroCliente));
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
@@ -182,7 +182,6 @@ class ClienteServiceTest {
     @Test
     void update_CpfJaExisteMasEhDoMesmoCliente() {
         when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
-        when(clienteRepository.existsByCpf(cliente.getCpf())).thenReturn(true);
         when(clienteRepository.findByCpf(cliente.getCpf())).thenReturn(Optional.of(cliente)); // Retorna o mesmo cliente
         when(clienteRepository.save(any(ClienteModel.class))).thenReturn(cliente);
     
@@ -264,8 +263,9 @@ class ClienteServiceTest {
 
     
     @Test
-    void deleteById_ClienteExiste() {
-        when(clienteRepository.existsById(clienteId)).thenReturn(true);
+    void deleteById_Valido() {
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(clienteZeroSaldo));
+        //when(clienteRepository.existsById(clienteId)).thenReturn(true);
         doNothing().when(clienteRepository).deleteById(clienteId);
 
         assertDoesNotThrow(() -> clienteService.deleteById(clienteId));
@@ -273,8 +273,19 @@ class ClienteServiceTest {
     }
 
     @Test
+    void deleteById_ExcessaoClientePossuiSaldo() {
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
+        //when(clienteRepository.existsById(clienteId)).thenReturn(true);
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
+            clienteService.deleteById(clienteId)
+        );
+
+        assertEquals("400 BAD_REQUEST \"O cliente não pode ser deletado porque ainda possui saldo em conta.\"", exception.getMessage());
+    }
+
+    @Test
     void deleteById_DExcecaoClienteNaoExiste() {
-        when(clienteRepository.existsById(clienteId)).thenReturn(false);
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.empty());
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
             clienteService.deleteById(clienteId)

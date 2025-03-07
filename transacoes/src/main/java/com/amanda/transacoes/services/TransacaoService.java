@@ -46,9 +46,10 @@ public class TransacaoService {
 
         if(transacaoDto.getOperacao() == OperacaoEnum.CREDITO){
             return operacaoCredito(transacaoDto);
-        }else{
-            return operacaoDebito(transacaoDto);
         }
+        
+        return operacaoDebito(transacaoDto);
+        
     }
 
     public void validarHorario(TipoOperacaoEnum tipo){

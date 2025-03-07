@@ -78,9 +78,8 @@ public class OperacaoService {
         operacaoModel.setTaxa(operacaoDto.getTaxa());
         operacaoModel.setAtivo(operacaoDto.getAtivo());
 
-        if(operacaoDto.getLimiteValor() <= 0 ){
-            operacaoModel.setLimiteValor(Double.POSITIVE_INFINITY);
-        }else{
+        operacaoModel.setLimiteValor(Double.POSITIVE_INFINITY);
+        if(operacaoDto.getLimiteValor() > 0 ){
             operacaoModel.setLimiteValor(operacaoDto.getLimiteValor());
         }
     
