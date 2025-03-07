@@ -13,7 +13,6 @@ public class TransacaoDebito extends  TransacaoStrategy {
         super(clienteService, operacaoService);
     }
 
-
     public TransacaoModel createTransacao(TransacaoDto transacaoDto){
 
         if(transacaoDto.getTipoOperacao() == TipoOperacaoEnum.SAQUE){
@@ -29,8 +28,6 @@ public class TransacaoDebito extends  TransacaoStrategy {
         }
 
         return new TransacaoModel(transacaoDto.getCcOrigem(), transacaoDto.getCcDestino(),transacaoDto.getValor(), transacaoDto.getOperacao(), transacaoDto.getTipoOperacao(), SituacaoOperacaoEnum.CONCLUIDO, transacaoDto.getDispositivoId()); 
-
-
         
     }
 
@@ -39,7 +36,5 @@ public class TransacaoDebito extends  TransacaoStrategy {
         clienteService.debitar(transacaoDto.getCcOrigem(), transacaoDto.getValor(),operacaoService.getTaxaOperacao(transacaoDto.getTipoOperacao()));
 
         return new TransacaoModel(transacaoDto.getCcOrigem(), transacaoDto.getCcDestino(),transacaoDto.getValor(), transacaoDto.getOperacao(), transacaoDto.getTipoOperacao(), SituacaoOperacaoEnum.CONCLUIDO, transacaoDto.getDispositivoId()); 
-
     }
-
 }

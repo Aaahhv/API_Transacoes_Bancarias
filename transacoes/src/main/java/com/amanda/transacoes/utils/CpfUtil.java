@@ -13,26 +13,22 @@ public class CpfUtil {
     }
     
     public static String formatsCpf(String cpf) {
-        //cpf = cpf.replaceAll("[^\\d]", ""); //remove tudo diferente de digitos numericos (1, 2, 3, 4...)
         cpf = cpf.replaceAll("[.-]", ""); //remove apenas pontos e hífens
 
         return cpf.substring(0, 3) + "." + cpf.substring(3, 6) + "." + cpf.substring(6, 9) + "-" + cpf.substring(9, 11);
     }
 
     public static boolean isFormatoValido(String cpf) {
-        //cpf = cpf.replaceAll("[^\\d]", "");
         cpf = cpf.replaceAll("[.-]", ""); 
         return CPF_PATTERN.matcher(cpf).matches();
     }
 
     public static boolean isTodosDigitosIguais(String cpf) {
-        //cpf = cpf.replaceAll("[^\\d]", "");
         cpf = cpf.replaceAll("[.-]", ""); 
         return cpf.matches("(\\d)\\1{10}");
     }
 
     public static boolean isDigitosVerificadoresValidos(String cpf) {
-        //cpf = cpf.replaceAll("[^\\d]", "");
         cpf = cpf.replaceAll("[.-]", ""); 
         int[] pesos1 = {10, 9, 8, 7, 6, 5, 4, 3, 2};
         int[] pesos2 = {11, 10, 9, 8, 7, 6, 5, 4, 3, 2};

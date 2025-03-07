@@ -16,6 +16,7 @@ import com.amanda.transacoes.models.ClienteModel;
 import com.amanda.transacoes.repositories.ClienteRepository;
 import com.amanda.transacoes.utils.CpfUtil;
 import com.amanda.transacoes.utils.NomeUtil;
+import com.amanda.transacoes.validators.ClienteValidator;
 
 @Service
 public class ClienteService {
@@ -27,18 +28,13 @@ public class ClienteService {
     @Lazy //evita dependencia ciclina ente ClienteService e DispotividoService
     private DispositivoService dispositivoService;
 
-    public ClienteModel create(ClienteDto clienteDto) {
-        isCpfValido(clienteDto.getCpf());
-        
-        if(clienteRepository.existsByCpf(CpfUtil.formatsCpf(clienteDto.getCpf()))){
-            //Essa mensagem de erro pode ser uma vulnerabilidade -> permite que atacantes descubram se o CPF XXXXXXXXX-XX é cliente do banco
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O CPF já está cadastrado no sistema.");
-        }
+    @Autowired
+    private ClienteValidator clienteValidator;
 
-        if(NomeUtil.isNomeNullOrEmpty(clienteDto.getNome())){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O nome não deve ser vazio ou nulo.");
-        }
-        
+    public ClienteModel create(ClienteDto clienteDto) {
+
+        clienteValidator.validateCreate(clienteDto);
+
         ClienteModel cliente = new ClienteModel(clienteDto.getNome(), CpfUtil.formatsCpf(clienteDto.getCpf()), gerarNumConta(), true, 0);
         return clienteRepository.save(cliente);
     }
@@ -78,38 +74,17 @@ public class ClienteService {
     public ClienteModel update(ClienteDto clienteDto, UUID id) {
         ClienteModel cliente = clienteRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado."));
         
+        clienteValidator.validateUpdate(clienteDto, id);
+
         if(!NomeUtil.isNomeNullOrEmpty(clienteDto.getNome())){
             cliente.setNome(clienteDto.getNome());
         }
         
         if(!CpfUtil.isCpfNullOrEmpty(clienteDto.getCpf())){
-
-            isCpfValido(clienteDto.getCpf());   
-            clienteDto.setCpf(CpfUtil.formatsCpf(clienteDto.getCpf()));
-
-            ClienteModel clienteByCpf = clienteRepository.findByCpf(clienteDto.getCpf()).orElse(null);
-            if (clienteByCpf != null && !clienteByCpf.getId().equals(id)) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O CPF já está cadastrado no sistema.");
-            }
-
-            cliente.setCpf(clienteDto.getCpf());
+            cliente.setCpf(CpfUtil.formatsCpf(clienteDto.getCpf()));
         }
 
         return clienteRepository.save(cliente);
-    }
-
-    public void isCpfValido(String cpf){
-        if(!CpfUtil.isFormatoValido(cpf)){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Formato de CPF invalido, o CPF deve ter 11 numeros.");
-        }
-
-        if(CpfUtil.isTodosDigitosIguais(cpf)){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CPF invalido, todos os digitos sao iguais.");
-        }
-
-        if(!CpfUtil.isDigitosVerificadoresValidos(cpf)){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CPF inválido, dígitos verificadores não conferem.");
-        }
     }
 
     public void deleteById(UUID id) {

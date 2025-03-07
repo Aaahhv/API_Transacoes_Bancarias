@@ -328,38 +328,6 @@ class ClienteServiceTest {
     }
 
     @Test
-    void isCpfValido_CpfValido() {
-        assertDoesNotThrow(() -> clienteService.isCpfValido("52998224725")); // CPF real válido
-    }
-
-    @Test
-    void isCpfValido_FormatoInvalido() {
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
-            clienteService.isCpfValido("123A567890") // Contém letra e tem menos de 11 números
-        );
-
-        assertEquals("400 BAD_REQUEST \"Formato de CPF invalido, o CPF deve ter 11 numeros.\"", exception.getMessage());
-    }
-
-    @Test
-    void isCpfValido_ExcecaoTodosDigitosIguais() {
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
-            clienteService.isCpfValido("11111111111") // Todos os dígitos são iguais
-        );
-
-        assertEquals("400 BAD_REQUEST \"CPF invalido, todos os digitos sao iguais.\"", exception.getMessage());
-    }
-
-    @Test
-    void isCpfValido_ExcecaoDigitosVerificadoresInvalidos() {
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
-            clienteService.isCpfValido("52998224720") // CPF inválido com erro nos dígitos verificadores
-        );
-
-        assertEquals("400 BAD_REQUEST \"CPF inválido, dígitos verificadores não conferem.\"", exception.getMessage());
-    }
-
-    @Test
     void debitar_DebitarSaldoValido() {
         when(clienteRepository.findByNumConta(cliente.getNumConta())).thenReturn(Optional.of(cliente));
         when(clienteRepository.save(any(ClienteModel.class))).thenReturn(cliente);
