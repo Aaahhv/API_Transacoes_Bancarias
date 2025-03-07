@@ -88,12 +88,9 @@ public class ClienteService {
     }
 
     public void deleteById(UUID id) {
+        ClienteModel cliente = clienteRepository.findById(id).orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado."));
 
-        ClienteModel clienteByCpf = clienteRepository.findById(id).orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado."));
-
-        if(clienteByCpf.getSaldo() != 0){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O cliente não pode ser deletado porque ainda possui saldo em conta.");
-        }
+        clienteValidator.validateDelete(cliente);
 
         dispositivoService.deleteByClienteId(id);
         clienteRepository.deleteById(id);
@@ -109,9 +106,8 @@ public class ClienteService {
     public ClienteModel debitar(String numConta, double valor, double taxa) {
         ClienteModel cliente = clienteRepository.findByNumConta(numConta).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Número de conta "+ numConta + " não encontrado."));
         
-        if(cliente.getSaldo() < (valor+taxa)){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Saldo insuficiente.");
-        }
+        clienteValidator.validateDebitar(cliente, valor, taxa);
+
         cliente.setSaldo((cliente.getSaldo() - valor) - taxa);
     
         return clienteRepository.save(cliente);
@@ -130,5 +126,4 @@ public class ClienteService {
 
         return cliente.getAtivo();
     }
-
 }

@@ -49,6 +49,21 @@ public class ClienteValidator {
         }
     }
 
+    public void validateDebitar(ClienteModel cliente, double valor, double taxa) {
+        if(cliente.getSaldo() < (valor+taxa)){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Saldo insuficiente.");
+        }
+
+        //if (valor < taxa) nao permitir ?
+
+    }
+
+    public void validateDelete(ClienteModel cliente) {
+        if(cliente.getSaldo() != 0){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O cliente não pode ser deletado porque ainda possui saldo em conta.");
+        }
+    }
+
     public void isCpfValido(String cpf){
         if(!CpfUtil.isFormatoValido(cpf)){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Formato de CPF invalido, o CPF deve ter 11 numeros.");
