@@ -12,10 +12,12 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.amanda.transacoes.dtos.TransacaoDto;
 import com.amanda.transacoes.enums.OperacaoEnum;
-import com.amanda.transacoes.enums.SituacaoOperacaoEnum;
 import com.amanda.transacoes.enums.TipoOperacaoEnum;
 import com.amanda.transacoes.models.TransacaoModel;
 import com.amanda.transacoes.repositories.TransacaoRepository;
+import com.amanda.transacoes.transacaoStrategy.TransacaoCredito;
+import com.amanda.transacoes.transacaoStrategy.TransacaoDebito;
+import com.amanda.transacoes.transacaoStrategy.TransacaoStrategy;
 
 @Service
 public class TransacaoService {   
@@ -44,12 +46,20 @@ public class TransacaoService {
 
         validarHorario(transacaoDto.getTipoOperacao());
 
-        if(transacaoDto.getOperacao() == OperacaoEnum.CREDITO){
-            return operacaoCredito(transacaoDto);
-        }
-        
-        return operacaoDebito(transacaoDto);
-        
+        TransacaoStrategy transacao;
+
+        switch (transacaoDto.getOperacao()) {
+            case OperacaoEnum.CREDITO:
+                transacao = new TransacaoCredito(clienteService, operacaoService);
+                break;
+            case OperacaoEnum.DEBITO:
+                transacao = new TransacaoDebito(clienteService, operacaoService);
+                break;
+            default:
+                throw new IllegalArgumentException("Operação inválida: " + transacaoDto.getOperacao());
+}
+        TransacaoModel transacaoNova = transacao.createTransacao(transacaoDto);
+        return transacaoRepository.save(transacaoNova);
     }
 
     public void validarHorario(TipoOperacaoEnum tipo){
@@ -142,60 +152,6 @@ public class TransacaoService {
 
     }
 
-    public TransacaoModel operacaoCredito(TransacaoDto transacaoDto){
-
-        if(transacaoDto.getTipoOperacao() == TipoOperacaoEnum.DEPOSITO){
-            return operacaoCreditoDeposito(transacaoDto);
-        }
-
-        if(transacaoDto.getCcOrigem().startsWith("159")){
-            clienteService.creditar(transacaoDto.getCcOrigem(), transacaoDto.getValor(), 0);
-        }
-
-        if(transacaoDto.getCcDestino().startsWith("159")){
-            clienteService.debitar(transacaoDto.getCcDestino(), transacaoDto.getValor(), operacaoService.getTaxaOperacao(transacaoDto.getTipoOperacao()));
-        }
-
-        TransacaoModel transacao = new TransacaoModel(transacaoDto.getCcOrigem(), transacaoDto.getCcDestino(),transacaoDto.getValor(), transacaoDto.getOperacao(), transacaoDto.getTipoOperacao(), SituacaoOperacaoEnum.CONCLUIDO, transacaoDto.getDispositivoId());
-        return transacaoRepository.save(transacao);
-    }
-
-    public TransacaoModel operacaoDebito(TransacaoDto transacaoDto){
-
-        if(transacaoDto.getTipoOperacao() == TipoOperacaoEnum.SAQUE){
-            return operacaoDebitoSaque(transacaoDto);
-        }
-
-        if(transacaoDto.getCcOrigem().startsWith("159")){
-            clienteService.debitar(transacaoDto.getCcOrigem(), transacaoDto.getValor(), operacaoService.getTaxaOperacao(transacaoDto.getTipoOperacao()));
-        }
-        
-        if(transacaoDto.getCcDestino().startsWith("159")){
-            clienteService.creditar(transacaoDto.getCcDestino(), transacaoDto.getValor(), 0);
-        }
-
-        TransacaoModel transacao = new TransacaoModel(transacaoDto.getCcOrigem(), transacaoDto.getCcDestino(),transacaoDto.getValor(), transacaoDto.getOperacao(), transacaoDto.getTipoOperacao(), SituacaoOperacaoEnum.CONCLUIDO, transacaoDto.getDispositivoId());
-        return transacaoRepository.save(transacao);
-
-    }
-
-    public TransacaoModel operacaoCreditoDeposito(TransacaoDto transacaoDto){
-
-        clienteService.creditar(transacaoDto.getCcOrigem(), transacaoDto.getValor(), operacaoService.getTaxaOperacao(transacaoDto.getTipoOperacao()));
-
-        TransacaoModel transacao = new TransacaoModel(transacaoDto.getCcOrigem(), transacaoDto.getCcDestino(),transacaoDto.getValor(), transacaoDto.getOperacao(), transacaoDto.getTipoOperacao(), SituacaoOperacaoEnum.CONCLUIDO, transacaoDto.getDispositivoId());
-        return transacaoRepository.save(transacao);
-
-    }
-
-    public TransacaoModel operacaoDebitoSaque(TransacaoDto transacaoDto){
-
-        clienteService.debitar(transacaoDto.getCcOrigem(), transacaoDto.getValor(),operacaoService.getTaxaOperacao(transacaoDto.getTipoOperacao()));
-
-        TransacaoModel transacao = new TransacaoModel(transacaoDto.getCcOrigem(), transacaoDto.getCcDestino(),transacaoDto.getValor(), transacaoDto.getOperacao(), transacaoDto.getTipoOperacao(), SituacaoOperacaoEnum.CONCLUIDO, transacaoDto.getDispositivoId());
-        return transacaoRepository.save(transacao);
-    }
-
 
     public List<TransacaoModel> getAll() {
         return transacaoRepository.findAll();
@@ -209,7 +165,6 @@ public class TransacaoService {
         if (!transacaoRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Transação não encontrada.");
         }
-
         transacaoRepository.deleteById(id);
     }
 }
