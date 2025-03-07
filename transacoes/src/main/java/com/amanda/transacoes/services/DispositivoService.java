@@ -12,6 +12,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.amanda.transacoes.dtos.DispositivoDto;
 import com.amanda.transacoes.models.DispositivoModel;
 import com.amanda.transacoes.repositories.DispositivoRepository;
+import com.amanda.transacoes.validators.DispositivoValidator;
 
 import jakarta.transaction.Transactional;
 
@@ -24,26 +25,15 @@ public class DispositivoService {
     @Autowired
     private ClienteService clienteService;
     
-    public DispositivoModel create(DispositivoDto dispositivoDto) {
-        if(dispositivoDto.getDescricao() == null){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A descrição não deve ser nula.");
-        }
+    @Autowired
+    private DispositivoValidator dispositivoValidator;
 
-        if(dispositivoDto.getDescricao().isEmpty()){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A descrição não deve ser vazia.");
-        }
-         
-        if(dispositivoDto.getClienteId() == null){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O clienteID não deve ser nulo.");
-        }
-        
-        if(!clienteService.existsById(dispositivoDto.getClienteId())){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado.");
-        }
+    public DispositivoModel create(DispositivoDto dispositivoDto) {
+
+        dispositivoValidator.validateCreate(dispositivoDto);
          
         DispositivoModel dispositivo = new DispositivoModel(dispositivoDto.getDescricao(), true, dispositivoDto.getClienteId());
         return dispositivoRepository.save(dispositivo);
-       
     }
 
     
