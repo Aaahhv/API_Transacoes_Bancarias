@@ -71,30 +71,28 @@ public class OperacaoService {
     }
 
     public double getLimiteValor(TipoOperacaoEnum tipo){
-        OperacaoModel operacao = operacaoRepository.findByTipo(tipo).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Operação não encontrada."));
+        OperacaoModel operacao = getByTipo(tipo);
         return operacao.getLimiteValor();
     }
     
     public double getTaxaOperacao(TipoOperacaoEnum tipo){
-        OperacaoModel operacao = operacaoRepository.findByTipo(tipo).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Operação não encontrada."));
+        OperacaoModel operacao = getByTipo(tipo);
         return operacao.getTaxa();
     }
 
     public boolean isTipoDeOperacaoAtiva(TipoOperacaoEnum tipo){
-        OperacaoModel operacao = operacaoRepository.findByTipo(tipo).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Operação não encontrada."));
+        OperacaoModel operacao = getByTipo(tipo);
         return operacao.getAtivo();
     }
     
     public boolean isLimiteValorValido(TipoOperacaoEnum tipo, double valor){
-        OperacaoModel operacao = operacaoRepository.findByTipo(tipo).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Operação não encontrada."));
+        OperacaoModel operacao = getByTipo(tipo);
         return valor <= operacao.getLimiteValor();
     }
 
     public boolean isHorarioValido(TipoOperacaoEnum tipo, LocalTime horario){
-        OperacaoModel operacao = operacaoRepository.findByTipo(tipo).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Operação não encontrada."));
+        OperacaoModel operacao = getByTipo(tipo);
         return horario.isAfter(operacao.getHorarioInicio()) && horario.isBefore(operacao.getHorarioFim());
     }
-
-
 }
 
