@@ -13,7 +13,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.InjectMocks;
@@ -166,16 +165,6 @@ class ClienteServiceTest {
         assertTrue(resultado);
         verify(clienteRepository).existsByNumConta("159001");
     }
-/* 
-    @Test
-    void existsByNumConta_ClienteNaoExiste() {
-        when(clienteRepository.existsByNumConta("159001")).thenReturn(false);
-
-        boolean resultado = clienteService.existsByNumConta("159001");
-
-        assertFalse(resultado);
-        verify(clienteRepository).existsByNumConta("159001");
-    }*/
  
     @Test
     void update_ClienteValido_DeveAtualizarCliente() {
@@ -307,7 +296,6 @@ class ClienteServiceTest {
         assertEquals("404 NOT_FOUND \"Número de conta 159001 não encontrado.\"", exception.getMessage());
     }
     
-
     @Test
     void creditar_ContaValida_DeveCreditarCorretamente() {
         when(clienteRepository.findByNumConta(cliente.getNumConta())).thenReturn(Optional.of(cliente));
@@ -373,36 +361,4 @@ class ClienteServiceTest {
 
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
     }
-
-   
-/* 
-    @Test
-    void update_CpfJaExiste_DeveLancarExcecao() {
-        ClienteModel outroCliente = new ClienteModel("Outro Cliente", "123.456.789-01", "159002", true, 500.0);
-        outroCliente.setId(UUID.randomUUID());
-
-        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
-        when(clienteRepository.findByCpf(anyString())).thenReturn(Optional.of(outroCliente));
-
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
-            clienteService.update(clienteDto, clienteId)
-        );
-
-        assertEquals("400 BAD_REQUEST \"O CPF já está cadastrado no sistema.\"", exception.getMessage());
-    }*/
-  /*
-    @Test
-    void update_CpfJaExisteMasEhDoMesmoCliente() {
-        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
-        when(clienteRepository.findByCpf(cliente.getCpf())).thenReturn(Optional.of(cliente)); // Retorna o mesmo cliente
-        when(clienteRepository.save(any(ClienteModel.class))).thenReturn(cliente);
-    
-        ClienteModel resultado = clienteService.update(clienteDto, clienteId);
-    
-        assertEquals(clienteDto.getCpf(), resultado.getCpf());
-        verify(clienteRepository).save(any(ClienteModel.class));
-    }
-
-    
-        */
 }
