@@ -21,9 +21,6 @@ public class DispositivoService {
     
     @Autowired
     private DispositivoRepository dispositivoRepository; 
-
-    @Autowired
-    private ClienteService clienteService;
     
     @Autowired
     private DispositivoValidator dispositivoValidator;
@@ -50,14 +47,13 @@ public class DispositivoService {
         
         DispositivoModel dispositivo = dispositivoRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Dispositivo não encontrado."));
         
-        if(dispositivoDto.getDescricao() != null){
+        dispositivoValidator.validateUpdate(dispositivoDto);
+
+        if(dispositivoDto.getDescricao() != null && !dispositivoDto.getDescricao().isEmpty()){
             dispositivo.setDescricao(dispositivoDto.getDescricao());
         }
 
         if(dispositivoDto.getClienteId() != null){
-            if(!clienteService.existsById(dispositivoDto.getClienteId())){
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado.");
-            }
             dispositivo.setClienteId(dispositivoDto.getClienteId());
         }
         
@@ -67,12 +63,9 @@ public class DispositivoService {
     
     public void deleteById(UUID id) {
 
-        if (!dispositivoRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Dispositivo não encontrado.");
-        }
+        dispositivoValidator.validateDelete(id);
 
         dispositivoRepository.deleteById(id);
-
     }
 
     //eu nao sei oque eh Transactional, eu nao sei pra que serve, eu nao sei de onde vem, eu nao sei que gosto tem, mas sem ele nao funciona. 

@@ -76,6 +76,8 @@ public class TransacaoService {
         if(!operacaoService.isLimiteValorValido(tipo,valor)){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O valor da transação excede o limite do tipo de operação.");
         }
+
+        //TEM QUE VALIDAR SE A CcORIGEM E CcDESTINO TEM OS VALORES RESPECTIVOS, POR QUE TA CREDITANDO ERRADO QUANDO DESTINO NAO TEM DINHEIRO
     }
 
     public void validarOperacao(OperacaoEnum operacao, TipoOperacaoEnum tipo){
