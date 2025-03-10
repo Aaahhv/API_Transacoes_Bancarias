@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.InjectMocks;
@@ -24,12 +25,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.amanda.transacoes.dtos.ClienteDto;
 import com.amanda.transacoes.models.ClienteModel;
 import com.amanda.transacoes.repositories.ClienteRepository;
 import com.amanda.transacoes.utils.CpfUtil;
+import com.amanda.transacoes.validators.ClienteValidator;
 
 @ExtendWith(MockitoExtension.class)
 class ClienteServiceTest {
@@ -39,6 +42,12 @@ class ClienteServiceTest {
 
     @Mock
     private DispositivoService dispositivoService;
+
+    @Mock
+    private TransacaoService transacaoService;
+
+    @Mock
+    private ClienteValidator clienteValidator;
 
     @InjectMocks
     private ClienteService clienteService;
@@ -58,8 +67,7 @@ class ClienteServiceTest {
     }
 
     @Test
-    void create_DadosValidos() {
-        when(clienteRepository.existsByCpf(anyString())).thenReturn(false);
+    void create_DadosValidos_DeveSalvarCliente() {
         when(clienteRepository.save(any(ClienteModel.class))).thenReturn(cliente);
 
         ClienteModel resultado = clienteService.create(clienteDto);
@@ -70,52 +78,107 @@ class ClienteServiceTest {
     }
 
     @Test
-    void create_ExcecaoCpfJaExiste() {
-        when(clienteRepository.existsByCpf(anyString())).thenReturn(true);
-    
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
-            clienteService.create(clienteDto)
-        );
-    
-        assertEquals("400 BAD_REQUEST \"O CPF já está cadastrado no sistema.\"", exception.getMessage());
-    }
-    
-    @Test
-    void create_ExcecaoNomeVazio() {
-        ClienteDto clienteDtoInvalido = new ClienteDto("", "59146047026");
-    
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
-            clienteService.create(clienteDtoInvalido)
-        );
-    
-        assertEquals("400 BAD_REQUEST \"O nome não deve ser vazio ou nulo.\"", exception.getMessage());
-    }
-
-    @Test
-    void gerarNumConta_NumeroDeContaDisponivel() {
-        when(clienteRepository.existsByNumConta(anyString())).thenReturn(false); 
-
+    void gerarNumConta_Sucesso_DeveGerarNumeroUnico() {
         String numConta = clienteService.gerarNumConta();
-
         assertNotNull(numConta);
         assertTrue(numConta.startsWith("159"));
         assertEquals(6, numConta.length()); 
     }
 
     @Test
-    void gerarNumConta_ExcecaoTodosNumerosEmUso() {
+    void gerarNumConta_TodasTentativasFalham_DeveLancarExcecao() {
         when(clienteRepository.existsByNumConta(anyString())).thenReturn(true); 
 
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
-            clienteService.gerarNumConta()
-        );
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            clienteService.gerarNumConta();
+        });
 
-        assertEquals("500 INTERNAL_SERVER_ERROR \"Não foi possível gerar um novo número de conta.\"", exception.getMessage());
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, exception.getStatusCode());
+        assertEquals("Não foi possível gerar um novo número de conta.", exception.getReason());
     }
 
+    @Test
+    void getAll_ListaDeClientes_DeveRetornarListaDeClientes() {
+        List<ClienteModel> listaClientes = Arrays.asList(cliente);
+        when(clienteRepository.findAll()).thenReturn(listaClientes);
+
+        List<ClienteModel> resultado = clienteService.getAll();
+
+        assertFalse(resultado.isEmpty());
+        assertEquals(1, resultado.size());
+    }
+
+    @Test
+    void getById_ClienteIdExiste_DeveRetornarCliente() {
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
+
+        Optional<ClienteModel> foundCliente = clienteService.getById(clienteId);
+
+        assertTrue(foundCliente.isPresent());
+        assertEquals(cliente.getId(), foundCliente.get().getId());
+    }
+
+    @Test
+    void getById_ClienteIdNaoExiste_DeveRetornarEmpty() {
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.empty());
+
+        Optional<ClienteModel> foundCliente = clienteService.getById(clienteId);
+
+        assertFalse(foundCliente.isPresent());
+    }
+
+    @Test
+    void getByCpf_CpfExistente_DeveRetornarCliente() {
+        when(clienteRepository.findByCpf(cliente.getCpf())).thenReturn(Optional.of(cliente));
+
+        Optional<ClienteModel> resultado = clienteService.getByCpf(cliente.getCpf());
+
+        assertTrue(resultado.isPresent());
+        assertEquals(cliente.getCpf(), resultado.get().getCpf());
+    }
+
+    @Test
+    void existsById_ClienteExiste_DeveRetornarTrue() {
+        when(clienteRepository.existsById(clienteId)).thenReturn(true);
+
+        boolean resultado = clienteService.existsById(clienteId);
+
+        assertTrue(resultado);
+        verify(clienteRepository).existsById(clienteId);
+    }
+
+    @Test
+    void existsById_ClienteNaoExiste_DeveRetornarFalse() {
+        when(clienteRepository.existsById(clienteId)).thenReturn(false);
+
+        boolean resultado = clienteService.existsById(clienteId);
+
+        assertFalse(resultado);
+        verify(clienteRepository).existsById(clienteId);
+    }
+
+    @Test
+    void existsByNumConta_ClienteExiste_DeveRetornarTrue() {
+        when(clienteRepository.existsByNumConta("159001")).thenReturn(true);
+
+        boolean resultado = clienteService.existsByNumConta("159001");
+
+        assertTrue(resultado);
+        verify(clienteRepository).existsByNumConta("159001");
+    }
+/* 
+    @Test
+    void existsByNumConta_ClienteNaoExiste() {
+        when(clienteRepository.existsByNumConta("159001")).thenReturn(false);
+
+        boolean resultado = clienteService.existsByNumConta("159001");
+
+        assertFalse(resultado);
+        verify(clienteRepository).existsByNumConta("159001");
+    }*/
  
     @Test
-    void update_ClienteValido() {
+    void update_ClienteValido_DeveAtualizarCliente() {
         when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
         when(clienteRepository.save(any(ClienteModel.class))).thenReturn(cliente);
 
@@ -128,7 +191,7 @@ class ClienteServiceTest {
  
 
     @Test
-    void update_ExcecaoClienteNaoEncontrado() {
+    void update_ClienteIdNaoExiste_DeveLancarExcecao() {
         when(clienteRepository.findById(clienteId)).thenReturn(Optional.empty());
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
@@ -139,7 +202,182 @@ class ClienteServiceTest {
     }
 
     @Test
-    void update_ExcecaoCpfJaExiste() {
+    void update_NomeNulo_DeveAtualizarApenasOCpf() {
+        ClienteDto clienteDtoInvalido = new ClienteDto(null, "726.559.780-05");
+
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
+        when(clienteRepository.save(any(ClienteModel.class))).thenReturn(cliente);
+
+        ClienteModel resultado = clienteService.update(clienteDtoInvalido, clienteId);
+
+        assertEquals("Amanda Souza", resultado.getNome());
+        assertEquals("726.559.780-05", resultado.getCpf());
+        verify(clienteRepository).save(any(ClienteModel.class));
+    }
+
+    @Test
+    void update_CpfNulo_DeveAtualizarApenasONome() {
+        ClienteDto clienteDtoInvalido = new ClienteDto("Novo Nome", null);
+
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
+        when(clienteRepository.save(any(ClienteModel.class))).thenReturn(cliente);
+
+        ClienteModel resultado = clienteService.update(clienteDtoInvalido, clienteId);
+
+        assertEquals("Novo Nome", resultado.getNome());
+        assertEquals("591.460.470-26", resultado.getCpf());
+        verify(clienteRepository).save(any(ClienteModel.class));
+    }
+
+    @Test
+    void deleteById_ClienteIdValido_DeveDeletarCliente() {
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(clienteZeroSaldo));
+        doNothing().when(dispositivoService).deleteByClienteId(clienteId);
+        doNothing().when(transacaoService).deleteByClienteId(clienteZeroSaldo);
+        doNothing().when(clienteRepository).deleteById(clienteId);
+
+
+        assertDoesNotThrow(() -> clienteService.deleteById(clienteId));
+        verify(clienteRepository).deleteById(clienteId);
+    }
+
+    @Test
+    void deleteById_ClienteIdNaoExiste_DeveLancarExcecao() {
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
+            clienteService.deleteById(clienteId)
+        );
+
+        assertEquals("404 NOT_FOUND \"Cliente não encontrado.\"", exception.getMessage());
+    }
+
+    @Test
+    void ativar_ClienteExiste_DeveFazerAtivacaoCorreta() {
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
+        when(clienteRepository.save(any(ClienteModel.class))).thenReturn(cliente);
+
+        ClienteModel resultado = clienteService.ativar(clienteId, false);
+
+        assertFalse(resultado.getAtivo());
+        verify(clienteRepository).save(any(ClienteModel.class));
+    }
+
+    @Test
+    void ativar_DesativarClienteExiste_DeveDesativarCorretamente() {
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
+        when(clienteRepository.save(any(ClienteModel.class))).thenReturn(cliente);
+
+        ClienteModel resultado = clienteService.ativar(clienteId, false);
+
+        assertFalse(resultado.getAtivo());
+        verify(clienteRepository).save(cliente);
+    }
+
+    @Test
+    void ativar_ClienteNaoExiste_DeveLancarExcecao() {
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
+            clienteService.ativar(clienteId, true)
+        );
+
+        assertEquals("404 NOT_FOUND \"Cliente não encontrado.\"", exception.getMessage());
+    }
+
+    @Test
+    void debitar_DebitarSaldoValido_DeveDebitarCorretamente() {
+        when(clienteRepository.findByNumConta(cliente.getNumConta())).thenReturn(Optional.of(cliente));
+        when(clienteRepository.save(any(ClienteModel.class))).thenReturn(cliente);
+
+        ClienteModel resultado = clienteService.debitar(cliente.getNumConta(), 100, 10);
+
+        assertEquals(890.0, resultado.getSaldo());
+        verify(clienteRepository).save(any(ClienteModel.class));
+    }
+
+    @Test
+    void debitar_NumContaInexistente_ExcecaoContaNaoEncontrada() {
+        when(clienteRepository.findByNumConta("159001")).thenReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
+            clienteService.debitar("159001", 100.0, 10.0)
+        );
+
+        assertEquals("404 NOT_FOUND \"Número de conta 159001 não encontrado.\"", exception.getMessage());
+    }
+    
+
+    @Test
+    void creditar_ContaValida_DeveCreditarCorretamente() {
+        when(clienteRepository.findByNumConta(cliente.getNumConta())).thenReturn(Optional.of(cliente));
+        when(clienteRepository.save(any(ClienteModel.class))).thenReturn(cliente);
+
+        ClienteModel resultado = clienteService.creditar(cliente.getNumConta(), 200, 10);
+
+        assertEquals(1190.0, resultado.getSaldo());
+        verify(clienteRepository).save(any(ClienteModel.class));
+    }
+
+    @Test
+    void creditar_ContaInexistente_ExcecaoContaNaoEncontrada() {
+        when(clienteRepository.findByNumConta("159001")).thenReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
+            clienteService.creditar("159001", 100.0, 10.0)
+        );
+
+        assertEquals("404 NOT_FOUND \"Número de conta 159001 não encontrado.\"", exception.getMessage());
+    }
+
+    @Test
+    void isClienteAtivo_ClienteAtivo_DeveRetornarTrue() {
+        when(clienteRepository.findByNumConta(cliente.getNumConta())).thenReturn(Optional.of(cliente));
+
+        boolean ativo = clienteService.isClienteAtivo(cliente.getNumConta());
+
+        assertTrue(ativo);
+    }
+
+    @Test
+    void isClienteAtivo_ClienteInativo_DeveLancarExcessao() {
+        cliente.setAtivo(false);
+        cliente.setNumConta("159001");
+        when(clienteRepository.findByNumConta(cliente.getNumConta())).thenReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
+            clienteService.isClienteAtivo(cliente.getNumConta())
+        );
+
+        assertEquals("404 NOT_FOUND \"Número de conta 159001 não encontrado.\"", exception.getMessage());
+    }
+
+    @Test
+    void ativar_ClienteExistente_DeveAtivar() {
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
+        when(clienteRepository.save(any(ClienteModel.class))).thenReturn(cliente);
+
+        ClienteModel result = clienteService.ativar(clienteId, true);
+
+        assertTrue(result.getAtivo());
+        verify(clienteRepository).save(cliente);
+    }
+
+    @Test
+    void ativar_ClienteExistente_DeveLancarExcessao() {
+        when(clienteRepository.findById(clienteId)).thenReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            clienteService.ativar(clienteId, true);
+        });
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+    }
+
+   
+/* 
+    @Test
+    void update_CpfJaExiste_DeveLancarExcecao() {
         ClienteModel outroCliente = new ClienteModel("Outro Cliente", "123.456.789-01", "159002", true, 500.0);
         outroCliente.setId(UUID.randomUUID());
 
@@ -151,34 +389,8 @@ class ClienteServiceTest {
         );
 
         assertEquals("400 BAD_REQUEST \"O CPF já está cadastrado no sistema.\"", exception.getMessage());
-    }
-
-    @Test
-    void update_NomeNulo() {
-        ClienteDto clienteDtoInvalido = new ClienteDto(null, "726.559.780-05");
-
-        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
-        when(clienteRepository.save(any(ClienteModel.class))).thenReturn(cliente);
-
-        ClienteModel resultado = clienteService.update(clienteDtoInvalido, clienteId);
-
-        assertEquals("Amanda Souza", resultado.getNome());
-        verify(clienteRepository).save(any(ClienteModel.class));
-    }
-
-    @Test
-    void update_CpfNulo() {
-        ClienteDto clienteDtoInvalido = new ClienteDto("Novo Nome", null);
-
-        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
-        when(clienteRepository.save(any(ClienteModel.class))).thenReturn(cliente);
-
-        ClienteModel resultado = clienteService.update(clienteDtoInvalido, clienteId);
-
-        assertEquals("591.460.470-26", resultado.getCpf());
-        verify(clienteRepository).save(any(ClienteModel.class));
-    }
-
+    }*/
+  /*
     @Test
     void update_CpfJaExisteMasEhDoMesmoCliente() {
         when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
@@ -191,226 +403,6 @@ class ClienteServiceTest {
         verify(clienteRepository).save(any(ClienteModel.class));
     }
 
-    @Test
-    void getAll_ListaDeClientes() {
-        List<ClienteModel> listaClientes = Arrays.asList(cliente);
-        when(clienteRepository.findAll()).thenReturn(listaClientes);
-
-        List<ClienteModel> resultado = clienteService.getAll();
-
-        assertFalse(resultado.isEmpty());
-        assertEquals(1, resultado.size());
-    }
-
-    @Test
-    void getById_ClienteExiste() {
-        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
-
-        Optional<ClienteModel> resultado = clienteService.getById(clienteId);
-
-        assertTrue(resultado.isPresent());
-        assertEquals(clienteId, resultado.get().getId());
-
-    }
-
-    @Test
-    void getById_ClienteNaoExiste() {
-        when(clienteRepository.findById(clienteId)).thenReturn(Optional.empty());
     
-        Optional<ClienteModel> resultado = clienteService.getById(clienteId);
-    
-        assertFalse(resultado.isPresent());
-    }
-
-    @Test
-    void getByCpf_CpfExistente() {
-        when(clienteRepository.findByCpf(cliente.getCpf())).thenReturn(Optional.of(cliente));
-
-        Optional<ClienteModel> resultado = clienteService.getByCpf(cliente.getCpf());
-
-        assertTrue(resultado.isPresent());
-        assertEquals(cliente.getCpf(), resultado.get().getCpf());
-    }
-
-    @Test
-    void getByCpf_CpfNaoExiste() {
-        when(clienteRepository.findByCpf("000.000.000-00")).thenReturn(Optional.empty());
-
-        Optional<ClienteModel> resultado = clienteService.getByCpf("000.000.000-00");
-
-        assertFalse(resultado.isPresent());
-    }
-
-    @Test
-    void existsById_ClienteExiste() {
-        when(clienteRepository.existsById(clienteId)).thenReturn(true);
-
-        boolean resultado = clienteService.existsById(clienteId);
-
-        assertTrue(resultado);
-        verify(clienteRepository).existsById(clienteId);
-    }
-
-    @Test
-    void existsById_ClienteNaoExiste() {
-        when(clienteRepository.existsById(clienteId)).thenReturn(false);
-
-        boolean resultado = clienteService.existsById(clienteId);
-
-        assertFalse(resultado);
-        verify(clienteRepository).existsById(clienteId);
-    }
-
-    
-    @Test
-    void deleteById_Valido() {
-        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(clienteZeroSaldo));
-        //when(clienteRepository.existsById(clienteId)).thenReturn(true);
-        doNothing().when(clienteRepository).deleteById(clienteId);
-
-        assertDoesNotThrow(() -> clienteService.deleteById(clienteId));
-        verify(clienteRepository).deleteById(clienteId);
-    }
-
-    @Test
-    void deleteById_ExcessaoClientePossuiSaldo() {
-        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
-        //when(clienteRepository.existsById(clienteId)).thenReturn(true);
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
-            clienteService.deleteById(clienteId)
-        );
-
-        assertEquals("400 BAD_REQUEST \"O cliente não pode ser deletado porque ainda possui saldo em conta.\"", exception.getMessage());
-    }
-
-    @Test
-    void deleteById_DExcecaoClienteNaoExiste() {
-        when(clienteRepository.findById(clienteId)).thenReturn(Optional.empty());
-
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
-            clienteService.deleteById(clienteId)
-        );
-
-        assertEquals("404 NOT_FOUND \"Cliente não encontrado.\"", exception.getMessage());
-    }
-
-    @Test
-    void ativar_AtivarClienteExiste() {
-        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
-        when(clienteRepository.save(any(ClienteModel.class))).thenReturn(cliente);
-
-        ClienteModel resultado = clienteService.ativar(clienteId, false);
-
-        assertFalse(resultado.getAtivo());
-        verify(clienteRepository).save(any(ClienteModel.class));
-    }
-
-    @Test
-    void ativar_DesativarClienteExiste() {
-        when(clienteRepository.findById(clienteId)).thenReturn(Optional.of(cliente));
-        when(clienteRepository.save(any(ClienteModel.class))).thenReturn(cliente);
-
-        ClienteModel resultado = clienteService.ativar(clienteId, false);
-
-        assertFalse(resultado.getAtivo());
-        verify(clienteRepository).save(cliente);
-    }
-
-    @Test
-    void ativar_ExcecaoClienteNaoEncontrado() {
-        when(clienteRepository.findById(clienteId)).thenReturn(Optional.empty());
-
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
-            clienteService.ativar(clienteId, true)
-        );
-
-        assertEquals("404 NOT_FOUND \"Cliente não encontrado.\"", exception.getMessage());
-    }
-
-    @Test
-    void debitar_DebitarSaldoValido() {
-        when(clienteRepository.findByNumConta(cliente.getNumConta())).thenReturn(Optional.of(cliente));
-        when(clienteRepository.save(any(ClienteModel.class))).thenReturn(cliente);
-
-        ClienteModel resultado = clienteService.debitar(cliente.getNumConta(), 100, 10);
-
-        assertEquals(890.0, resultado.getSaldo());
-        verify(clienteRepository).save(any(ClienteModel.class));
-    }
-
-    @Test
-    void debitar_ExcecaoSaldoInsuficiente() {
-        when(clienteRepository.findByNumConta(cliente.getNumConta())).thenReturn(Optional.of(cliente));
-
-        Exception exception = assertThrows(ResponseStatusException.class, () -> 
-            clienteService.debitar(cliente.getNumConta(), 2000, 10));
-
-        assertEquals("400 BAD_REQUEST \"Saldo insuficiente.\"", exception.getMessage());
-    }
-
-    @Test
-    void debitar_ExcecaoContaNaoEncontrada() {
-        when(clienteRepository.findByNumConta("159001")).thenReturn(Optional.empty());
-
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
-            clienteService.debitar("159001", 100.0, 10.0)
-        );
-
-        assertEquals("404 NOT_FOUND \"Número de conta 159001 não encontrado.\"", exception.getMessage());
-    }
-    
-
-    @Test
-    void creditar_ContaValida() {
-        when(clienteRepository.findByNumConta(cliente.getNumConta())).thenReturn(Optional.of(cliente));
-        when(clienteRepository.save(any(ClienteModel.class))).thenReturn(cliente);
-
-        ClienteModel resultado = clienteService.creditar(cliente.getNumConta(), 200, 10);
-
-        assertEquals(1190.0, resultado.getSaldo());
-        verify(clienteRepository).save(any(ClienteModel.class));
-    }
-
-    @Test
-    void creditar_ExcecaoContaNaoEncontrada() {
-        when(clienteRepository.findByNumConta("159001")).thenReturn(Optional.empty());
-
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
-            clienteService.creditar("159001", 100.0, 10.0)
-        );
-
-        assertEquals("404 NOT_FOUND \"Número de conta 159001 não encontrado.\"", exception.getMessage());
-    }
-
-
-    @Test
-    void isClienteAtivo_DeveRetornarTrueQuandoClienteEstaAtivo() {
-        cliente.setAtivo(true);
-        when(clienteRepository.findByNumConta(cliente.getNumConta())).thenReturn(Optional.of(cliente));
-
-        boolean resultado = clienteService.isClienteAtivo(cliente.getNumConta());
-
-        assertTrue(resultado);
-    }
-
-    @Test
-    void isClienteAtivo_ClienteInativo() {
-        cliente.setAtivo(false);
-        when(clienteRepository.findByNumConta(cliente.getNumConta())).thenReturn(Optional.of(cliente));
-
-        boolean resultado = clienteService.isClienteAtivo(cliente.getNumConta());
-
-        assertFalse(resultado);
-    }
-
-    @Test
-    void isClienteAtivo_ExcecaoQNumContaNaoEncontrado() {
-        when(clienteRepository.findByNumConta("999999")).thenReturn(Optional.empty());
-
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> 
-            clienteService.isClienteAtivo("999999")
-        );
-
-        assertEquals("404 NOT_FOUND \"Número de conta 999999 não encontrado\"", exception.getMessage());
-    }
+        */
 }

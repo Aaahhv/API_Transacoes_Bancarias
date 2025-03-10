@@ -131,7 +131,7 @@ public class ClienteService {
     }
 
     public boolean isClienteAtivo(String numConta) {
-        ClienteModel cliente = clienteRepository.findByNumConta(numConta).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Número de conta "+ numConta + " não encontrado"));
+        ClienteModel cliente = clienteRepository.findByNumConta(numConta).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Número de conta "+ numConta + " não encontrado."));
 
         return cliente.getAtivo();
     }
