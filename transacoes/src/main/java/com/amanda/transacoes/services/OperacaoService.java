@@ -11,6 +11,7 @@ import com.amanda.transacoes.dtos.OperacaoDto;
 import com.amanda.transacoes.enums.TipoOperacaoEnum;
 import com.amanda.transacoes.models.OperacaoModel;
 import com.amanda.transacoes.repositories.OperacaoRepository;
+import com.amanda.transacoes.validators.OperacaoValidator;
 
 import java.time.LocalTime;
 import java.util.List;
@@ -18,41 +19,27 @@ import java.util.List;
 @Service
 public class OperacaoService {
     
-
     @Autowired
     private OperacaoRepository operacaoRepository;
 
+    @Autowired
+    private OperacaoValidator operacaoValidator;
 
     @PostConstruct
     public void inicializarConfiguracoes() {
-        //DEPOSITO
-        if (operacaoRepository.findByTipo(TipoOperacaoEnum.DEPOSITO) == null) {
-            OperacaoModel novaConfig = new OperacaoModel(TipoOperacaoEnum.DEPOSITO, 0, true, Double.POSITIVE_INFINITY, LocalTime.of(0, 0), LocalTime.of(23, 59) );
-            operacaoRepository.save(novaConfig);
-        }
- 
-        //SAQUE  
-        if (operacaoRepository.findByTipo(TipoOperacaoEnum.SAQUE) == null) {
-            OperacaoModel novaConfig = new OperacaoModel(TipoOperacaoEnum.SAQUE, 0, true, Double.POSITIVE_INFINITY, LocalTime.of(0, 0), LocalTime.of(23, 59) );
-            operacaoRepository.save(novaConfig);
-        }
 
-        //PIX
-        if (operacaoRepository.findByTipo(TipoOperacaoEnum.PIX) == null) {
-            OperacaoModel novaConfig = new OperacaoModel(TipoOperacaoEnum.PIX, 0, true, Double.POSITIVE_INFINITY, LocalTime.of(0, 0), LocalTime.of(23, 59) );
-            operacaoRepository.save(novaConfig);
-        }
-
-        //TED
-        if (operacaoRepository.findByTipo(TipoOperacaoEnum.TED) == null ) {
-            OperacaoModel novaConfig = new OperacaoModel(TipoOperacaoEnum.TED, 20, true, 60000.0, LocalTime.of(6, 30), LocalTime.of(17, 0) ); // Ativado por padrão
-            operacaoRepository.save(novaConfig);
-        }
-
-        //DOC
-        if (operacaoRepository.findByTipo(TipoOperacaoEnum.DOC)== null) {
-            OperacaoModel novaConfig = new OperacaoModel(TipoOperacaoEnum.DOC, 10, true, 4999.0, LocalTime.of(0, 0), LocalTime.of(23, 59) );
-            operacaoRepository.save(novaConfig);
+        List<OperacaoModel> operacoesPadrao = List.of(
+            new OperacaoModel(TipoOperacaoEnum.DEPOSITO, 0, true, Double.POSITIVE_INFINITY, LocalTime.of(0, 0), LocalTime.of(23, 59)),
+            new OperacaoModel(TipoOperacaoEnum.SAQUE, 0, true, Double.POSITIVE_INFINITY, LocalTime.of(0, 0), LocalTime.of(23, 59)),
+            new OperacaoModel(TipoOperacaoEnum.PIX, 0, true, Double.POSITIVE_INFINITY, LocalTime.of(0, 0), LocalTime.of(23, 59)),
+            new OperacaoModel(TipoOperacaoEnum.TED, 20, true, 60000.0, LocalTime.of(6, 30), LocalTime.of(17, 0)),
+            new OperacaoModel(TipoOperacaoEnum.DOC, 10, true, 4999.0, LocalTime.of(0, 0), LocalTime.of(23, 59))
+        );
+    
+        for (OperacaoModel operacao : operacoesPadrao) {
+            if (operacaoRepository.findByTipo(operacao.getTipo()).isEmpty()) {
+                operacaoRepository.save(operacao);
+            }
         }
     }
 
@@ -61,20 +48,10 @@ public class OperacaoService {
     }
 
     public OperacaoModel update(OperacaoDto operacaoDto){
-        OperacaoModel operacaoModel = operacaoRepository.findByTipo(operacaoDto.getTipo());
-
-        if(operacaoModel == null){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Operação não encontrada.");
-        }
-
-        if(operacaoDto.getHorario().getHoraInicio().isAfter(operacaoDto.getHorario().getHoraFim())){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Horário de início não pode ser maior que horário de fim.");
-        }
-
-        if(operacaoDto.getTaxa() < 0){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A taxa não pode ser negativa.");
-        }
+        OperacaoModel operacaoModel = operacaoRepository.findByTipo(operacaoDto.getTipo()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Operação não encontrada."));
         
+        operacaoValidator.validateUpdate(operacaoDto);
+
         operacaoModel.setTaxa(operacaoDto.getTaxa());
         operacaoModel.setAtivo(operacaoDto.getAtivo());
 
@@ -90,31 +67,31 @@ public class OperacaoService {
     }
 
     public OperacaoModel getByTipo(TipoOperacaoEnum tipo){
-        return operacaoRepository.findByTipo(tipo);
+        return operacaoRepository.findByTipo(tipo).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Operação não encontrada."));
     }
 
     public double getLimiteValor(TipoOperacaoEnum tipo){
-        OperacaoModel operacao = operacaoRepository.findByTipo(tipo);
+        OperacaoModel operacao = operacaoRepository.findByTipo(tipo).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Operação não encontrada."));
         return operacao.getLimiteValor();
     }
     
     public double getTaxaOperacao(TipoOperacaoEnum tipo){
-        OperacaoModel operacao = operacaoRepository.findByTipo(tipo);
+        OperacaoModel operacao = operacaoRepository.findByTipo(tipo).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Operação não encontrada."));
         return operacao.getTaxa();
     }
 
     public boolean isTipoDeOperacaoAtiva(TipoOperacaoEnum tipo){
-        OperacaoModel operacao = operacaoRepository.findByTipo(tipo);
+        OperacaoModel operacao = operacaoRepository.findByTipo(tipo).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Operação não encontrada."));
         return operacao.getAtivo();
     }
     
     public boolean isLimiteValorValido(TipoOperacaoEnum tipo, double valor){
-        OperacaoModel operacao = operacaoRepository.findByTipo(tipo);
+        OperacaoModel operacao = operacaoRepository.findByTipo(tipo).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Operação não encontrada."));
         return valor <= operacao.getLimiteValor();
     }
 
     public boolean isHorarioValido(TipoOperacaoEnum tipo, LocalTime horario){
-        OperacaoModel operacao = operacaoRepository.findByTipo(tipo);
+        OperacaoModel operacao = operacaoRepository.findByTipo(tipo).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Operação não encontrada."));
         return horario.isAfter(operacao.getHorarioInicio()) && horario.isBefore(operacao.getHorarioFim());
     }
 
