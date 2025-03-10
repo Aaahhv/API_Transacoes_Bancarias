@@ -45,6 +45,12 @@ public class TransacaoController {
         return ResponseEntity.of(transacaoService.getById(id));
     }
 
+    @GetMapping("/clienteId")
+    public ResponseEntity<List<TransacaoModel>> readByClienteId(UUID clienteId) {
+        List<TransacaoModel> transacoes = transacaoService.getByClienteId(clienteId);
+        return ResponseEntity.ok(transacoes);
+    }
+
  
     @DeleteMapping("/")
     public ResponseEntity<Void> delete(UUID id) {

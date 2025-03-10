@@ -29,6 +29,10 @@ public class ClienteService {
     private DispositivoService dispositivoService;
 
     @Autowired
+    @Lazy 
+    private TransacaoService transacaoService;
+
+    @Autowired
     private ClienteValidator clienteValidator;
 
     public ClienteModel create(ClienteDto clienteDto) {
@@ -71,6 +75,10 @@ public class ClienteService {
         return clienteRepository.existsById(id);
     }
 
+    public boolean existsByNumConta(String numConta) {
+        return clienteRepository.existsByNumConta(numConta);
+    }
+
     public ClienteModel update(ClienteDto clienteDto, UUID id) {
         ClienteModel cliente = clienteRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado."));
         
@@ -93,6 +101,7 @@ public class ClienteService {
         clienteValidator.validateDelete(cliente);
 
         dispositivoService.deleteByClienteId(id);
+        transacaoService.deleteByClienteId(id, cliente.getNumConta()); 
         clienteRepository.deleteById(id);
     }
 

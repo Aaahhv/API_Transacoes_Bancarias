@@ -1,21 +1,26 @@
 package com.amanda.transacoes.services;
 
-//import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.amanda.transacoes.dtos.TransacaoDto;
 import com.amanda.transacoes.enums.OperacaoEnum;
+import com.amanda.transacoes.models.ClienteModel;
 import com.amanda.transacoes.models.TransacaoModel;
 import com.amanda.transacoes.repositories.TransacaoRepository;
 import com.amanda.transacoes.transacaoStrategy.TransacaoCredito;
 import com.amanda.transacoes.transacaoStrategy.TransacaoDebito;
 import com.amanda.transacoes.transacaoStrategy.TransacaoStrategy;
 import com.amanda.transacoes.validators.TransacaoValidator;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class TransacaoService {   
@@ -60,6 +65,37 @@ public class TransacaoService {
     public Optional<TransacaoModel> getById(UUID id) {
         return transacaoRepository.findById(id);
     }
+    
+    public List<TransacaoModel> getByClienteId(UUID id) {
+
+        ClienteModel cliente = clienteService.getById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrada."));
+        
+        List<TransacaoModel> transacoesDestino = transacaoRepository.findByCcDestino(cliente.getNumConta());
+
+        List<TransacaoModel> transacoesOrigem = transacaoRepository.findByCcOrigem(cliente.getNumConta());
+
+        List<TransacaoModel> transacoes = new ArrayList<>(transacoesDestino);
+
+        transacoes.addAll(transacoesOrigem);
+
+        return transacoes;
+    }
+
+    @Transactional
+    public void deleteByClienteId(UUID clienteId, String numConta) {
+
+        List<TransacaoModel> transacoesDestino = getByClienteId(clienteId);
+
+        for (TransacaoModel transacao : transacoesDestino) {
+
+            if( (  numConta.equals(transacao.getCcDestino()) || !clienteService.existsByNumConta(transacao.getCcDestino()) )
+            &&  (  numConta.equals(transacao.getCcOrigem())  || !clienteService.existsByNumConta(transacao.getCcOrigem())  )  ){
+
+                deleteById(transacao.getId());
+            }
+
+        }
+    } 
 
     public void deleteById(UUID id) {
     

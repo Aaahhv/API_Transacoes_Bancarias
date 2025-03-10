@@ -13,6 +13,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface TransacaoRepository extends JpaRepository<TransacaoModel, UUID> {
 
     List<TransacaoModel> findAll();
+
+    List<TransacaoModel> findByCcDestino(String ccDestino);
+
+    List<TransacaoModel> findByCcOrigem(String ccOrigem);
+
+    boolean existsByCcDestino(String ccDestino);
+    
+    boolean existsByCcOrigem(String ccOrigem);
     
     boolean existsById(UUID id);
 

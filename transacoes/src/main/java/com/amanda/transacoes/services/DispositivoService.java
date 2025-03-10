@@ -68,7 +68,6 @@ public class DispositivoService {
         dispositivoRepository.deleteById(id);
     }
 
-    //eu nao sei oque eh Transactional, eu nao sei pra que serve, eu nao sei de onde vem, eu nao sei que gosto tem, mas sem ele nao funciona. 
     @Transactional
     public void deleteByClienteId(UUID clienteId) {
 
