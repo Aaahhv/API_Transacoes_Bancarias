@@ -91,7 +91,7 @@ public class DispositivoService {
     }
 
     public boolean isDispositivoAtivo(UUID id) {
-        DispositivoModel dispositivo = dispositivoRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Dispositivo não encontrado"));
+        DispositivoModel dispositivo = dispositivoRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Dispositivo não encontrado."));
         
         return dispositivo.getAtivo();
     }
