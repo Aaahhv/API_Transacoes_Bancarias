@@ -19,4 +19,6 @@ public interface DispositivoRepository extends JpaRepository<DispositivoModel, U
 
     void deleteByClienteId(UUID id);
 
+    List<DispositivoModel> findByClienteId(UUID clienteId);
+
 }

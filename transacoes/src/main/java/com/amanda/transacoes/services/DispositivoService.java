@@ -32,7 +32,6 @@ public class DispositivoService {
         DispositivoModel dispositivo = new DispositivoModel(dispositivoDto.getDescricao(), true, dispositivoDto.getClienteId());
         return dispositivoRepository.save(dispositivo);
     }
-
     
     public List<DispositivoModel> getAll() {
         return dispositivoRepository.findAll();
@@ -41,7 +40,10 @@ public class DispositivoService {
     public Optional<DispositivoModel> getById(UUID id) {
         return dispositivoRepository.findById(id);
     }
-   
+
+    public List<DispositivoModel> getByClienteId(UUID clienteId) {
+        return dispositivoRepository.findByClienteId(clienteId);
+    }
         
     public DispositivoModel update(DispositivoDto dispositivoDto, UUID id) {
         

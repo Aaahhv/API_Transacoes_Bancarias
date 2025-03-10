@@ -47,6 +47,12 @@ public class DispositivoController {
         return ResponseEntity.of(dispositivoService.getById(id));
     }
 
+    @GetMapping("/clienteId")
+     public ResponseEntity<List<DispositivoModel>> readByClienteId(UUID clienteId) {
+        List<DispositivoModel> clientes = dispositivoService.getByClienteId(clienteId);
+        return ResponseEntity.ok(clientes);
+    }
+
     @PutMapping("/")
     public ResponseEntity<DispositivoModel> update(@RequestBody DispositivoDto dispositivoDto, UUID id) {
         DispositivoModel dispositivo = dispositivoService.update(dispositivoDto, id);
