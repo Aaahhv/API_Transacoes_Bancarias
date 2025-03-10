@@ -19,12 +19,12 @@ public class TransacaoCredito extends TransacaoStrategy {
             return createTransacaoDeposito(transacaoDto);
         }
 
-        if(transacaoDto.getCcOrigem().startsWith("159")){
-            clienteService.creditar(transacaoDto.getCcOrigem(), transacaoDto.getValor(), 0);
-        }
-
         if(transacaoDto.getCcDestino().startsWith("159")){
             clienteService.debitar(transacaoDto.getCcDestino(), transacaoDto.getValor(), operacaoService.getTaxaOperacao(transacaoDto.getTipoOperacao()));
+        }
+
+        if(transacaoDto.getCcOrigem().startsWith("159")){
+            clienteService.creditar(transacaoDto.getCcOrigem(), transacaoDto.getValor(), 0);
         }
 
         return new TransacaoModel(transacaoDto.getCcOrigem(), transacaoDto.getCcDestino(),transacaoDto.getValor(), transacaoDto.getOperacao(), transacaoDto.getTipoOperacao(), SituacaoOperacaoEnum.CONCLUIDO, transacaoDto.getDispositivoId());
