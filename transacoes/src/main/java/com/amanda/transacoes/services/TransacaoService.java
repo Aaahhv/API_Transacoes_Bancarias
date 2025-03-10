@@ -82,18 +82,28 @@ public class TransacaoService {
     }
 
     @Transactional
-    public void deleteByClienteId(UUID clienteId, String numConta) {
+    public void deleteByClienteId(ClienteModel cliente) {
 
-        List<TransacaoModel> transacoesDestino = getByClienteId(clienteId);
+        List<TransacaoModel> transacoesDestino = transacaoRepository.findByCcDestino(cliente.getNumConta());
 
         for (TransacaoModel transacao : transacoesDestino) {
 
-            if( (  numConta.equals(transacao.getCcDestino()) || !clienteService.existsByNumConta(transacao.getCcDestino()) )
-            &&  (  numConta.equals(transacao.getCcOrigem())  || !clienteService.existsByNumConta(transacao.getCcOrigem())  )  ){
+            transacao.setCcDestino("XXXXXX");
 
+            if(!clienteService.existsByNumConta(transacao.getCcOrigem()) ){
                 deleteById(transacao.getId());
             }
+        }
 
+        List<TransacaoModel> transacoesOrigem = transacaoRepository.findByCcOrigem(cliente.getNumConta());
+
+        for (TransacaoModel transacao : transacoesOrigem) {
+
+            transacao.setCcOrigem("XXXXXX");
+
+            if(!clienteService.existsByNumConta(transacao.getCcDestino()) ){
+                deleteById(transacao.getId());
+            }
         }
     } 
 

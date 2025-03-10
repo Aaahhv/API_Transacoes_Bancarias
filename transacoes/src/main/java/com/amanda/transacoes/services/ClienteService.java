@@ -101,7 +101,7 @@ public class ClienteService {
         clienteValidator.validateDelete(cliente);
 
         dispositivoService.deleteByClienteId(id);
-        transacaoService.deleteByClienteId(id, cliente.getNumConta()); 
+        transacaoService.deleteByClienteId(cliente); 
         clienteRepository.deleteById(id);
     }
 
