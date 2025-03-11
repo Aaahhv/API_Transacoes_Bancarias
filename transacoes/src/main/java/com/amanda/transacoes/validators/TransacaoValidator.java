@@ -148,7 +148,7 @@ public class TransacaoValidator {
 
     }
 
-    public void ValidateDeleteById(UUID id) {
+    public void validateDeleteById(UUID id) {
         if (!transacaoRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Transação não encontrada.");
         }
