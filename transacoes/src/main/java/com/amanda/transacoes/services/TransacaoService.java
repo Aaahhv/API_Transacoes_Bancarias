@@ -52,7 +52,8 @@ public class TransacaoService {
                 break;
             default:
                 throw new IllegalArgumentException("Operação inválida: " + transacaoDto.getOperacao());
-}
+        }
+
         TransacaoModel transacaoNova = transacao.createTransacao(transacaoDto);
         return transacaoRepository.save(transacaoNova);
     }
@@ -68,7 +69,7 @@ public class TransacaoService {
     
     public List<TransacaoModel> getByClienteId(UUID id) {
 
-        ClienteModel cliente = clienteService.getById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrada."));
+        ClienteModel cliente = clienteService.getById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado."));
         
         List<TransacaoModel> transacoesDestino = transacaoRepository.findByCcDestino(cliente.getNumConta());
 
@@ -109,7 +110,7 @@ public class TransacaoService {
 
     public void deleteById(UUID id) {
     
-        transacaoValidator.ValidateDeleteById(id);
+        transacaoValidator.validateDeleteById(id);
     
         transacaoRepository.deleteById(id);
     }
