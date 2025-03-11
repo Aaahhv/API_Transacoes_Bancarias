@@ -14,6 +14,8 @@ import com.amanda.transacoes.repositories.TransacaoRepository;
 import com.amanda.transacoes.services.ClienteService;
 import com.amanda.transacoes.services.DispositivoService;
 import com.amanda.transacoes.services.OperacaoService;
+import com.amanda.transacoes.transacaoStrategy.TransacaoCredito;
+import com.amanda.transacoes.transacaoStrategy.TransacaoDebito;
 
 @Component
 public class TransacaoValidator {
@@ -72,54 +74,67 @@ public class TransacaoValidator {
         }
     }
 
-    //Esse metodo valida se a conta de origem e destino sao validas e ativas.
-    //No tipo DEPOSITO e SAQUE -> ccOrigem deve pertencer a instituicao, ccOrigem deve estar ativo e ccDestino deve ser empty
-    //No resto -> ccOrigem ou ccDestino deve pertencer a instituicao || se cc pertence a instituicao -> deve estar ativo || ccOrigem != ccDestino
     public void validarContas(String ccOrigem, String ccDestino, TipoOperacaoEnum tipo){
-        if(tipo == TipoOperacaoEnum.DEPOSITO || tipo == TipoOperacaoEnum.SAQUE){
 
-            if(!ccOrigem.startsWith("159")){
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A conta não pertence ao banco");
-            }
+        switch (tipo) {
+            case SAQUE:
+            case DEPOSITO:
+                validarContaDepositoSaque(ccOrigem, ccDestino, tipo);
+                break;
+            case PIX:
+            case TED:
+            case DOC:
+                validarContaPixTedDoc(ccOrigem, ccDestino, tipo);
+                break;
+            default:
+                throw new IllegalArgumentException("Operação inválida: " + tipo);
+        }
+    }
 
+    //No DEPOSITO e SAQUE: ccOrigem deve pertencer a instituicao, ccOrigem deve estar ativo e ccDestino deve ser empty
+    public void validarContaDepositoSaque(String ccOrigem, String ccDestino, TipoOperacaoEnum tipo){
+        if(!ccOrigem.startsWith("159")){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A conta não pertence ao banco");
+        }
+
+        if(!clienteService.isClienteAtivo(ccOrigem)){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Conta de origem inativa.");
+        }
+
+        if (!ccDestino.isEmpty()){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No tipo de operacao " + tipo +" a conta de destino deve ser vazia.");}
+    }
+
+    //No PIX, TED e DOC: (ccOrigem ou ccDestino deve pertencer a instituicao) && (se cc pertence a instituicao, então deve estar ativo) && (ccOrigem != ccDestino)
+    public void validarContaPixTedDoc(String ccOrigem, String ccDestino, TipoOperacaoEnum tipo){
+
+        if (ccOrigem.isEmpty()){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A conta de origem não deve ser vazia.");
+        }
+
+        if (ccDestino.isEmpty() ){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A conta de destino não deve ser vazia.");
+        }
+
+        if(!ccDestino.startsWith("159") && !ccOrigem.startsWith("159")){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nenhuma conta nessa transação pertence a nossa instituição.");}
+
+        if(ccOrigem.startsWith("159")){
             if(!clienteService.isClienteAtivo(ccOrigem)){
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Conta de origem inativa.");
             }
-
-            if (!ccDestino.isEmpty()){
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No tipo de operacao " + tipo +" a conta de destino deve ser vazia.");}
-
-        }else{
-
-            if (ccOrigem.isEmpty()){
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A conta de origem não deve ser vazia.");
-            }
-
-            
-            if (ccDestino.isEmpty() ){
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A conta de destino não deve ser vazia.");
-            }
-
-            if(!ccDestino.startsWith("159") && !ccOrigem.startsWith("159")){
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nenhuma conta nessa transação pertence a nossa instituição.");}
-
-            if(ccOrigem.startsWith("159")){
-                if(!clienteService.isClienteAtivo(ccOrigem)){
-                    throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Conta de origem inativa.");
-                }
-            }
-
-            if(ccDestino.startsWith("159")){
-                if(!clienteService.isClienteAtivo(ccDestino)){
-                    throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Conta de destino inativa.");
-                }
-            }
-
-            if(ccDestino.equals(ccOrigem)){
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nao é possivel enviar " + tipo + " para a mesma conta.");}
-        
         }
+
+        if(ccDestino.startsWith("159")){
+            if(!clienteService.isClienteAtivo(ccDestino)){
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Conta de destino inativa.");
+            }
+        }
+
+        if(ccDestino.equals(ccOrigem)){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nao é possivel enviar " + tipo + " para a mesma conta.");}
     }
+
 
     public void validarDispositivo(UUID dispositivoId){
         
