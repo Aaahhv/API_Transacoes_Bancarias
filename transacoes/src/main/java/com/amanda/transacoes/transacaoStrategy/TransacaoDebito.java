@@ -18,7 +18,18 @@ public class TransacaoDebito extends  TransacaoStrategy {
         if(transacaoDto.getTipoOperacao() == TipoOperacaoEnum.SAQUE){
             return createTransacaoSaque(transacaoDto);
         }
+        return createTransacaoPixTedDoc(transacaoDto);
+    }
 
+    public TransacaoModel createTransacaoSaque(TransacaoDto transacaoDto){
+    
+        clienteService.debitar(transacaoDto.getCcOrigem(), transacaoDto.getValor(),operacaoService.getTaxaOperacao(transacaoDto.getTipoOperacao()));
+
+        return new TransacaoModel(transacaoDto.getCcOrigem(), transacaoDto.getCcDestino(),transacaoDto.getValor(), transacaoDto.getOperacao(), transacaoDto.getTipoOperacao(), SituacaoOperacaoEnum.CONCLUIDO, transacaoDto.getDispositivoId()); 
+    }
+
+    public TransacaoModel createTransacaoPixTedDoc(TransacaoDto transacaoDto){
+    
         if(transacaoDto.getCcOrigem().startsWith("159")){
             clienteService.debitar(transacaoDto.getCcOrigem(), transacaoDto.getValor(), operacaoService.getTaxaOperacao(transacaoDto.getTipoOperacao()));
         }
@@ -26,14 +37,6 @@ public class TransacaoDebito extends  TransacaoStrategy {
         if(transacaoDto.getCcDestino().startsWith("159")){
             clienteService.creditar(transacaoDto.getCcDestino(), transacaoDto.getValor(), 0);
         }
-
-        return new TransacaoModel(transacaoDto.getCcOrigem(), transacaoDto.getCcDestino(),transacaoDto.getValor(), transacaoDto.getOperacao(), transacaoDto.getTipoOperacao(), SituacaoOperacaoEnum.CONCLUIDO, transacaoDto.getDispositivoId()); 
-        
-    }
-
-    public TransacaoModel createTransacaoSaque(TransacaoDto transacaoDto){
-    
-        clienteService.debitar(transacaoDto.getCcOrigem(), transacaoDto.getValor(),operacaoService.getTaxaOperacao(transacaoDto.getTipoOperacao()));
 
         return new TransacaoModel(transacaoDto.getCcOrigem(), transacaoDto.getCcDestino(),transacaoDto.getValor(), transacaoDto.getOperacao(), transacaoDto.getTipoOperacao(), SituacaoOperacaoEnum.CONCLUIDO, transacaoDto.getDispositivoId()); 
     }

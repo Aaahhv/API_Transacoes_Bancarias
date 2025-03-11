@@ -18,6 +18,17 @@ public class TransacaoCredito extends TransacaoStrategy {
         if(transacaoDto.getTipoOperacao() == TipoOperacaoEnum.DEPOSITO){
             return createTransacaoDeposito(transacaoDto);
         }
+        return createTransacaoPixTedDoc(transacaoDto);
+    }
+
+    public TransacaoModel createTransacaoDeposito(TransacaoDto transacaoDto){
+
+        clienteService.creditar(transacaoDto.getCcOrigem(), transacaoDto.getValor(), operacaoService.getTaxaOperacao(transacaoDto.getTipoOperacao()));
+        
+        return new TransacaoModel(transacaoDto.getCcOrigem(), transacaoDto.getCcDestino(),transacaoDto.getValor(), transacaoDto.getOperacao(), transacaoDto.getTipoOperacao(), SituacaoOperacaoEnum.CONCLUIDO, transacaoDto.getDispositivoId()); 
+    }
+
+    public TransacaoModel createTransacaoPixTedDoc(TransacaoDto transacaoDto){
 
         if(transacaoDto.getCcDestino().startsWith("159")){
             clienteService.debitar(transacaoDto.getCcDestino(), transacaoDto.getValor(), operacaoService.getTaxaOperacao(transacaoDto.getTipoOperacao()));
@@ -27,13 +38,6 @@ public class TransacaoCredito extends TransacaoStrategy {
             clienteService.creditar(transacaoDto.getCcOrigem(), transacaoDto.getValor(), 0);
         }
 
-        return new TransacaoModel(transacaoDto.getCcOrigem(), transacaoDto.getCcDestino(),transacaoDto.getValor(), transacaoDto.getOperacao(), transacaoDto.getTipoOperacao(), SituacaoOperacaoEnum.CONCLUIDO, transacaoDto.getDispositivoId());
-    }
-
-    public TransacaoModel createTransacaoDeposito(TransacaoDto transacaoDto){
-
-        clienteService.creditar(transacaoDto.getCcOrigem(), transacaoDto.getValor(), operacaoService.getTaxaOperacao(transacaoDto.getTipoOperacao()));
-        
         return new TransacaoModel(transacaoDto.getCcOrigem(), transacaoDto.getCcDestino(),transacaoDto.getValor(), transacaoDto.getOperacao(), transacaoDto.getTipoOperacao(), SituacaoOperacaoEnum.CONCLUIDO, transacaoDto.getDispositivoId()); 
     }
 }
