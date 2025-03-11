@@ -14,8 +14,6 @@ import com.amanda.transacoes.repositories.TransacaoRepository;
 import com.amanda.transacoes.services.ClienteService;
 import com.amanda.transacoes.services.DispositivoService;
 import com.amanda.transacoes.services.OperacaoService;
-import com.amanda.transacoes.transacaoStrategy.TransacaoCredito;
-import com.amanda.transacoes.transacaoStrategy.TransacaoDebito;
 
 @Component
 public class TransacaoValidator {

@@ -3,9 +3,6 @@ package com.amanda.transacoes.validators;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyDouble;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.UUID;
@@ -20,9 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.amanda.transacoes.dtos.TransacaoDto;
 import com.amanda.transacoes.enums.OperacaoEnum;
-import com.amanda.transacoes.enums.SituacaoOperacaoEnum;
 import com.amanda.transacoes.enums.TipoOperacaoEnum;
-import com.amanda.transacoes.models.TransacaoModel;
 import com.amanda.transacoes.repositories.TransacaoRepository;
 import com.amanda.transacoes.services.ClienteService;
 import com.amanda.transacoes.services.DispositivoService;
@@ -49,14 +44,11 @@ public class TransacaoValidatorTest {
 
     private TransacaoDto transacaoDtoDebito;
 
-    private TransacaoModel transacaoModelCredito;
-
 
     @BeforeEach
     void setUp() {
         transacaoDtoCredito = new TransacaoDto("159001", "159002", 100.0, OperacaoEnum.CREDITO, TipoOperacaoEnum.PIX, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4"));
         transacaoDtoDebito = new TransacaoDto("159001", "159002", 100.0, OperacaoEnum.DEBITO, TipoOperacaoEnum.TED, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4"));
-        transacaoModelCredito = new TransacaoModel("159001", "159002", 100.0, OperacaoEnum.CREDITO, TipoOperacaoEnum.PIX, SituacaoOperacaoEnum.CONCLUIDO, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4"));
         }
 
     @Test
