@@ -19,7 +19,7 @@ public class DispositivoModel {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @Column(nullable = false)
+    //@Column(nullable = false)
     private UUID clienteId;
 
     @CreationTimestamp

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +19,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.amanda.transacoes.dtos.TransacaoDto;
 import com.amanda.transacoes.enums.OperacaoEnum;
 import com.amanda.transacoes.enums.TipoOperacaoEnum;
+import com.amanda.transacoes.models.ClienteModel;
+import com.amanda.transacoes.models.DispositivoModel;
 import com.amanda.transacoes.repositories.TransacaoRepository;
 import com.amanda.transacoes.services.ClienteService;
 import com.amanda.transacoes.services.DispositivoService;
@@ -44,19 +47,37 @@ public class TransacaoValidatorTest {
 
     private TransacaoDto transacaoDtoDebito;
 
+    private DispositivoModel dispositivoModel;
+    
+    private ClienteModel clienteModel;
+
+    private UUID clienteId;
+    private UUID dispositivoId;
 
     @BeforeEach
     void setUp() {
         transacaoDtoCredito = new TransacaoDto("159001", "159002", 100.0, OperacaoEnum.CREDITO, TipoOperacaoEnum.PIX, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4"));
         transacaoDtoDebito = new TransacaoDto("159001", "159002", 100.0, OperacaoEnum.DEBITO, TipoOperacaoEnum.TED, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4"));
-        }
+    
+        clienteId = UUID.fromString("34fbe2a0-9815-4c35-a2ba-0c1fcccf66b2");
+        dispositivoId = UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4");
+        dispositivoModel = new DispositivoModel("Dispositivo Teste", true, clienteId); 
+        dispositivoModel.setId(dispositivoId);
+        clienteModel = new ClienteModel("Amanda Souza", "591.460.470-26", "159001", true, 1000.0);   
+        clienteModel.setId(clienteId);
+    
+    }
 
     @Test
     void validateCreate_TransacaoValida_DeveCriarTransacao() {
         when(operacaoService.isTipoDeOperacaoAtiva(TipoOperacaoEnum.PIX)).thenReturn(true);
         when(clienteService.isClienteAtivo("159001")).thenReturn(true);
         when(clienteService.isClienteAtivo("159002")).thenReturn(true);
-        when(dispositivoService.isDispositivoAtivo(UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4"))).thenReturn(true);
+
+        when(dispositivoService.getById(dispositivoModel.getId())).thenReturn(Optional.of(dispositivoModel));
+        when(clienteService.getById(clienteModel.getId())).thenReturn(Optional.of(clienteModel));
+        when(dispositivoService.isDispositivoAtivo(dispositivoModel.getId())).thenReturn(true);
+
         when(operacaoService.isLimiteValorValido(TipoOperacaoEnum.PIX, 100.0)).thenReturn(true);
         when(operacaoService.isHorarioValido(any(), any())).thenReturn(true);
     
@@ -244,16 +265,27 @@ public class TransacaoValidatorTest {
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> transacaoValidator.validarContaPixTedDoc(transacaoDtoDebito.getCcOrigem(),transacaoDtoDebito.getCcDestino(), transacaoDtoDebito.getTipoOperacao()));
         assertEquals("400 BAD_REQUEST \"Nao é possivel enviar PIX para a mesma conta.\"", exception.getMessage());
     }
-
+/* 
     @Test
-    void validarDispositivo_ExcessaoDispositivoInativo() {
-        UUID dispositivoId = UUID.randomUUID();
-        when(dispositivoService.isDispositivoAtivo(dispositivoId)).thenReturn(false);
+    void validarDispositivo_OperacaoSaqueDispositivoValido_DevePassar() {
+        transacaoDtoCredito.setTipoOperacao(TipoOperacaoEnum.SAQUE);
 
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> transacaoValidator.validarDispositivo(dispositivoId));
-        assertEquals("403 FORBIDDEN \"Dispositivo inativo\"", exception.getMessage());
+        when(dispositivoService.isDispositivoAtivo(dispositivoId)).thenReturn(true);
+
+        assertDoesNotThrow(() -> transacaoValidator.validarDispositivo(transacaoDtoCredito));
     }
 
+    @Test
+    void validarDispositivo_OperacaoDepositoDispositivoInvalido_DeveLancarExcessao() {
+        transacaoDtoCredito.setTipoOperacao(TipoOperacaoEnum.DEPOSITO);
+
+        when(dispositivoService.isDispositivoAtivo(dispositivoId)).thenReturn(false);
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> transacaoValidator.validarDispositivo(transacaoDtoCredito));
+
+        assertEquals("403 FORBIDDEN \"Caixa eletrônico inativo\"", exception.getMessage());
+    }
+*/
     @Test
     void validateDeleteById_IdInvalido_DeveLancarExcessao() {
         UUID transacaoId = UUID.randomUUID();

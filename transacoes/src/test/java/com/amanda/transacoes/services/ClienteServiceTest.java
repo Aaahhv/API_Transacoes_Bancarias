@@ -122,7 +122,7 @@ class ClienteServiceTest {
         when(clienteRepository.findById(clienteId)).thenReturn(Optional.empty());
 
         Optional<ClienteModel> foundCliente = clienteService.getById(clienteId);
-
+        
         assertFalse(foundCliente.isPresent());
     }
 

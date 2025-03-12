@@ -10,6 +10,8 @@ import org.springframework.web.server.ResponseStatusException;
 import com.amanda.transacoes.dtos.TransacaoDto;
 import com.amanda.transacoes.enums.OperacaoEnum;
 import com.amanda.transacoes.enums.TipoOperacaoEnum;
+import com.amanda.transacoes.models.ClienteModel;
+import com.amanda.transacoes.models.DispositivoModel;
 import com.amanda.transacoes.repositories.TransacaoRepository;
 import com.amanda.transacoes.services.ClienteService;
 import com.amanda.transacoes.services.DispositivoService;
@@ -36,7 +38,7 @@ public class TransacaoValidator {
 
         validarContas(transacaoDto.getCcOrigem(), transacaoDto.getCcDestino(), transacaoDto.getTipoOperacao());
 
-        validarDispositivo(transacaoDto.getDispositivoId());
+        validarDispositivo(transacaoDto);
 
         validarValor(transacaoDto.getTipoOperacao(), transacaoDto.getValor());
 
@@ -134,16 +136,47 @@ public class TransacaoValidator {
     }
 
 
-    public void validarDispositivo(UUID dispositivoId){
-        
-        if(!dispositivoService.isDispositivoAtivo(dispositivoId)){
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Dispositivo inativo");
+    public void validarDispositivo(TransacaoDto transacaoDto){
+
+        DispositivoModel dispositivo = dispositivoService.getById(transacaoDto.getDispositivoId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Dispositivo não encontrado."));
+
+        switch (transacaoDto.getTipoOperacao()) {
+            case SAQUE:
+            case DEPOSITO:
+
+                if(dispositivo.getClienteId()!= null){ 
+                    throw new ResponseStatusException(HttpStatus.FORBIDDEN, "O dispositivo deveria ser um caixa eletrônico.");
+                }
+                if(!dispositivoService.isDispositivoAtivo(transacaoDto.getDispositivoId())){ 
+                    throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Caixa eletrônico inativo.");
+                }
+                break;
+
+            case PIX:
+            case TED:
+            case DOC:
+
+                if(transacaoDto.getCcOrigem().startsWith("159")){
+                    ClienteModel cliente = clienteService.getById(dispositivo.getClienteId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado."));
+
+                    if(!cliente.getNumConta().equals(transacaoDto.getCcOrigem())){
+                        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "O dispositivo não pertence à conta de origem.");
+                    }
+
+                    if(!dispositivoService.isDispositivoAtivo(dispositivo.getId())){
+                        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Dispositivo inativo.");
+                    }
+                }
+                if(!transacaoDto.getCcOrigem().startsWith("159")){
+                    if(transacaoDto.getDispositivoId() != null){
+                        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "O dispositivoId deve ser nulo quando a conta de origem é estrageira.");
+                    }
+                }
+                break;
+
+            default:
+                throw new IllegalArgumentException("Operação inválida: " + transacaoDto.getTipoOperacao());
         }
-
-        // ?? validar se dispositivo pertence a conta de origem, se a conta de origem for do banco ?
-        // ?? se a transacao tiver origem em outro banco, deve existir dispositivoId ?
-        // ?? se for SAQUE/DEPOSITO, o dispositvoID seria o id do caixa eletronico ?
-
     }
 
     public void validateDeleteById(UUID id) {

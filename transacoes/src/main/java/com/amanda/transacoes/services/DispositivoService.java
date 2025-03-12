@@ -14,6 +14,7 @@ import com.amanda.transacoes.models.DispositivoModel;
 import com.amanda.transacoes.repositories.DispositivoRepository;
 import com.amanda.transacoes.validators.DispositivoValidator;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -24,6 +25,16 @@ public class DispositivoService {
     
     @Autowired
     private DispositivoValidator dispositivoValidator;
+
+    @PostConstruct
+    public void inicializarCaixasEletronicos(){
+
+        DispositivoModel caixaEletronicoAtivo = new DispositivoModel("Esse dispositivo representa um caixa eletronico", true, null);
+        dispositivoRepository.save(caixaEletronicoAtivo);
+        DispositivoModel caixaEletronicoInativo = new DispositivoModel("Esse dispositivo representa um caixa eletronico", false, null);
+        dispositivoRepository.save(caixaEletronicoInativo);
+
+    }
 
     public DispositivoModel create(DispositivoDto dispositivoDto) {
 
@@ -38,7 +49,7 @@ public class DispositivoService {
     }
         
     public Optional<DispositivoModel> getById(UUID id) {
-        return dispositivoRepository.findById(id);
+        return dispositivoRepository.findById(id); 
     }
 
     public List<DispositivoModel> getByClienteId(UUID clienteId) {
@@ -74,7 +85,6 @@ public class DispositivoService {
     public void deleteByClienteId(UUID clienteId) {
 
         dispositivoRepository.deleteByClienteId(clienteId);
-
     }
         
     public DispositivoModel ativar(UUID id, boolean ativo) {
@@ -84,7 +94,6 @@ public class DispositivoService {
         
         return dispositivoRepository.save(dispositivo);
         }
-
 
     public boolean existsById(UUID id){
         return dispositivoRepository.existsById(id);
