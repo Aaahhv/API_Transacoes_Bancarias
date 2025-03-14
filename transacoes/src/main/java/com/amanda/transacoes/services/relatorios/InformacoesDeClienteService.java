@@ -1,5 +1,6 @@
 package com.amanda.transacoes.services.relatorios;
 
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.amanda.transacoes.dtos.PeriodoDataDto;
 import com.amanda.transacoes.dtos.relatorios.ClienteETiposOperacaoDto;
 import com.amanda.transacoes.dtos.relatorios.ClienteEValorDto;
 import com.amanda.transacoes.models.ClienteModel;
@@ -19,13 +22,12 @@ import com.amanda.transacoes.repositories.TransacaoRepository;
 
 @Service
 public class InformacoesDeClienteService {
-    
+
     @Autowired
     private ClienteRepository clienteRepository;
 
     @Autowired
     private TransacaoRepository transacaoRepository;
-
 
     public Map<String, Double> getSaldoBanco() {
         List<ClienteModel> clientes = clienteRepository.findAll();
@@ -168,4 +170,55 @@ public class InformacoesDeClienteService {
         return transacoesPorCliente;
     }
 
+    public Map<String, Map<LocalDate, List<TransacaoModel>>> getExtratoClientePorData(String numConta, PeriodoDataDto periodo){
+
+        List<TransacaoModel> transacoesNumConta = listarTransacoesDaConta(numConta);
+
+        List<TransacaoModel> extratoNoPeriodo = new ArrayList<>();
+        for( TransacaoModel transacao : transacoesNumConta) {
+            if( transacao.getDataTransacao().isAfter(periodo.getDataInicio()) &&
+                transacao.getDataTransacao().isBefore(periodo.getDataFim())){
+                    extratoNoPeriodo.add(transacao);
+            }
+        }
+        
+        Map<LocalDate, List<TransacaoModel>> extratoAgrupadoPorDia = AgruparExtratoPorDia(extratoNoPeriodo);
+
+        Map<LocalDate, List<TransacaoModel>> extratoOrdenado = new TreeMap<>(extratoAgrupadoPorDia);
+
+        Map<String, Map<LocalDate, List<TransacaoModel>>> retorno = new HashMap<>();
+
+        retorno.put(numConta, extratoOrdenado);
+
+        return retorno;
+    }
+
+    public List<TransacaoModel> listarTransacoesDaConta(String numConta){
+
+        List<TransacaoModel> transacoes = transacaoRepository.findAll();
+        List<TransacaoModel> transacoesNumConta = new ArrayList<>();
+
+        for(TransacaoModel transacao : transacoes){
+            if((transacao.getCcOrigem() != null && !transacao.getCcOrigem().isEmpty() && transacao.getCcOrigem().equals(numConta)) ||
+            (transacao.getCcDestino() != null && !transacao.getCcDestino().isEmpty() && transacao.getCcDestino().equals(numConta))) {
+                transacoesNumConta.add(transacao);
+            }
+        }
+        return transacoesNumConta;
+    }
+ 
+    public Map<LocalDate, List<TransacaoModel>> AgruparExtratoPorDia(List<TransacaoModel> transacoes){
+    
+        Map<LocalDate, List<TransacaoModel>> extratoPorDia = new HashMap<>();
+
+        for( TransacaoModel transacao : transacoes){ 
+
+            LocalDate dia = LocalDate.from(transacao.getDataTransacao());
+
+            extratoPorDia.putIfAbsent(dia, new ArrayList<>());
+
+            extratoPorDia.get(dia).add(transacao);
+        }
+        return extratoPorDia;
+    }
 }

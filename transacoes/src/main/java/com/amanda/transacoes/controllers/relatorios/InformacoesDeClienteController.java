@@ -1,9 +1,12 @@
 package com.amanda.transacoes.controllers.relatorios;
 
+import com.amanda.transacoes.dtos.PeriodoDataDto;
 import com.amanda.transacoes.dtos.relatorios.ClienteETiposOperacaoDto;
 import com.amanda.transacoes.dtos.relatorios.ClienteEValorDto;
+import com.amanda.transacoes.models.TransacaoModel;
 import com.amanda.transacoes.services.relatorios.InformacoesDeClienteService;
 
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
@@ -40,13 +43,13 @@ public class InformacoesDeClienteController {
         return relatorioService.getClienteCincoMilPorMes();
     } 
 
-    //Listar as transações do cliente, com filtro de operação e tipo_operacao
-
     @GetMapping("/QuantidadeDeTipoOperacaoPorCliente")
     public  List<ClienteETiposOperacaoDto> readQuantidadeDeTipoDeOperacaoPorCliente() {   
         return relatorioService.getQuantidadeDeTipoOperacaoPorCliente();
     } 
-
-
-    //Consultar extrato do cliente em um período informado, agrupando transações por dia.
+     
+    @GetMapping("/ExtratoDeClienteDurantePeriodo")
+    public  Map<String, Map<LocalDate, List<TransacaoModel>>> readERRADo(String numConta, PeriodoDataDto periodo) {   
+        return relatorioService.getExtratoClientePorData(numConta, periodo);
+    } 
 }
