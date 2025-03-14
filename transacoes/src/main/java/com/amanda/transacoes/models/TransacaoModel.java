@@ -86,11 +86,11 @@ public class TransacaoModel {
         this.ccDestino = ccDestino;
     }
     
-    public LocalDateTime getdataTransacao() {
+    public LocalDateTime getDataTransacao() {
         return dataTransacao;
     }
 
-    public void setdataTransacao(LocalDateTime dataTransacao) {
+    public void setDataTransacao(LocalDateTime dataTransacao) {
         this.dataTransacao = dataTransacao;
     }
 
