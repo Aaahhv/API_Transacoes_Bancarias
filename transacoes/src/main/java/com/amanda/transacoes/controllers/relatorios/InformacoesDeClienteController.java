@@ -3,6 +3,8 @@ package com.amanda.transacoes.controllers.relatorios;
 import com.amanda.transacoes.dtos.PeriodoDataDto;
 import com.amanda.transacoes.dtos.relatorios.ClienteETiposOperacaoDto;
 import com.amanda.transacoes.dtos.relatorios.ClienteEValorDto;
+import com.amanda.transacoes.enums.OperacaoEnum;
+import com.amanda.transacoes.enums.TipoOperacaoEnum;
 import com.amanda.transacoes.models.TransacaoModel;
 import com.amanda.transacoes.services.relatorios.InformacoesDeClienteService;
 
@@ -43,6 +45,11 @@ public class InformacoesDeClienteController {
         return relatorioService.getClienteCincoMilPorMes();
     } 
 
+    @GetMapping("/ExtratoClienteComFiltro")
+    public  Map<String,List<TransacaoModel>> readExtratoClienteComFiltro(String numConta, OperacaoEnum operacao, TipoOperacaoEnum tipoOperacaoEnum) {   
+        return relatorioService.getExtratoClienteComFiltro(numConta, operacao, tipoOperacaoEnum);
+    } 
+
     @GetMapping("/QuantidadeDeTipoOperacaoPorCliente")
     public  List<ClienteETiposOperacaoDto> readQuantidadeDeTipoDeOperacaoPorCliente() {   
         return relatorioService.getQuantidadeDeTipoOperacaoPorCliente();
@@ -50,6 +57,6 @@ public class InformacoesDeClienteController {
      
     @GetMapping("/ExtratoDeClienteDurantePeriodo")
     public  Map<String, Map<LocalDate, List<TransacaoModel>>> readERRADo(String numConta, PeriodoDataDto periodo) {   
-        return relatorioService.getExtratoClientePorData(numConta, periodo);
+        return relatorioService.getExtratoClientePorDia(numConta, periodo);
     } 
 }

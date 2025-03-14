@@ -15,6 +15,8 @@ import org.springframework.web.server.ResponseStatusException;
 import com.amanda.transacoes.dtos.PeriodoDataDto;
 import com.amanda.transacoes.dtos.relatorios.ClienteETiposOperacaoDto;
 import com.amanda.transacoes.dtos.relatorios.ClienteEValorDto;
+import com.amanda.transacoes.enums.OperacaoEnum;
+import com.amanda.transacoes.enums.TipoOperacaoEnum;
 import com.amanda.transacoes.models.ClienteModel;
 import com.amanda.transacoes.models.TransacaoModel;
 import com.amanda.transacoes.repositories.ClienteRepository;
@@ -61,8 +63,73 @@ public class InformacoesDeClienteService {
         return relatorio;
     }
     
+    public List<ClienteETiposOperacaoDto> getQuantidadeDeTipoOperacaoPorCliente(){
+        List<TransacaoModel> transacoes = transacaoRepository.findAll();
+
+        Map<String, List<TransacaoModel>> transacoesPorContaMap = listarTransacoesPorConta(transacoes);
+        List<ClienteETiposOperacaoDto> listaClientes = new ArrayList<>();
+
+        for(Map.Entry<String, List<TransacaoModel>> entry : transacoesPorContaMap.entrySet()){
+            List<TransacaoModel> transacoesPorConta = entry.getValue();
+            String ccCliente = entry.getKey();
+
+            if( clienteRepository.existsByNumConta(ccCliente)){ 
+                ClienteModel cliente = clienteRepository.findByNumConta(ccCliente).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado."));
+                ClienteETiposOperacaoDto clienteDto = new ClienteETiposOperacaoDto(cliente);
+                
+                for (TransacaoModel transacao : transacoesPorConta) {
+                    clienteDto.incrementarTipoOperacao(transacao.getTipoOperacao());
+                }
+                listaClientes.add(clienteDto);
+            }
+        }
+        return  listaClientes;
+    }
+
+    public Map<String, List<TransacaoModel>> listarTransacoesPorConta(List<TransacaoModel> transacoes) {
+        Map<String, List<TransacaoModel>> transacoesPorCliente = new HashMap<>();
+
+        for (TransacaoModel transacao : transacoes) {
+            String ccOrigem = transacao.getCcOrigem();
+
+            if( clienteRepository.existsByNumConta(ccOrigem)){ 
+                if (!transacoesPorCliente.containsKey(ccOrigem)) {
+                    transacoesPorCliente.put(ccOrigem, new ArrayList<>());
+                }
+                transacoesPorCliente.get(ccOrigem).add(transacao);
+            }
+
+            String ccDestino = transacao.getCcDestino();
+
+            if( clienteRepository.existsByNumConta(ccDestino)){   
+                if (!transacoesPorCliente.containsKey(ccDestino)) {
+                    transacoesPorCliente.put(ccDestino, new ArrayList<>());
+                }
+                transacoesPorCliente.get(ccDestino).add(transacao);
+            }
+        }
+        return transacoesPorCliente;
+    }
+
+    public Map<String,List<TransacaoModel>> getExtratoClienteComFiltro(String numConta, OperacaoEnum operacao, TipoOperacaoEnum tipoOperacaoEnum){
+
+        List<TransacaoModel> transacoes = getExtratoPorConta(numConta);
+        List<TransacaoModel> transacoesFiltradas = new ArrayList<>();
+
+        for(TransacaoModel transacao: transacoes){
+            if((transacao.getOperacao() != null      &&  transacao.getOperacao() == operacao) &&
+               (transacao.getTipoOperacao() != null  &&  transacao.getTipoOperacao() == tipoOperacaoEnum)){
+                transacoesFiltradas.add(transacao);
+            }
+        }
+
+        Map<String,List<TransacaoModel>> retorno = new HashMap<>();
+        retorno.put(numConta,transacoesFiltradas);
+
+        return retorno;
+    }
+
     public Map<YearMonth,  List<ClienteEValorDto>> getClienteCincoMilPorMes() {
-        // 0L0 
         List<TransacaoModel> transacoes = transacaoRepository.findAll();
 
         Map<YearMonth, Map<ClienteModel, Double>> transferenciasPorMes = new HashMap<>();
@@ -122,57 +189,9 @@ public class InformacoesDeClienteService {
         return transferenciaPorMes;
     }
 
-    public List<ClienteETiposOperacaoDto> getQuantidadeDeTipoOperacaoPorCliente(){
-        List<TransacaoModel> transacoes = transacaoRepository.findAll();
+    public Map<String, Map<LocalDate, List<TransacaoModel>>> getExtratoClientePorDia(String numConta, PeriodoDataDto periodo){
 
-        Map<String, List<TransacaoModel>> transacoesPorContaMap = listarTransacoesPorConta(transacoes);
-        List<ClienteETiposOperacaoDto> listaClientes = new ArrayList<>();
-
-        for(Map.Entry<String, List<TransacaoModel>> entry : transacoesPorContaMap.entrySet()){
-            List<TransacaoModel> transacoesPorConta = entry.getValue();
-            String ccCliente = entry.getKey();
-
-            if( clienteRepository.existsByNumConta(ccCliente)){ 
-                ClienteModel cliente = clienteRepository.findByNumConta(ccCliente).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado."));
-                ClienteETiposOperacaoDto clienteDto = new ClienteETiposOperacaoDto(cliente);
-                
-                for (TransacaoModel transacao : transacoesPorConta) {
-                    clienteDto.incrementarTipoOperacao(transacao.getTipoOperacao());
-                }
-                listaClientes.add(clienteDto);
-            }
-        }
-        return  listaClientes;
-    }
-
-    public Map<String, List<TransacaoModel>> listarTransacoesPorConta(List<TransacaoModel> transacoes) {
-        Map<String, List<TransacaoModel>> transacoesPorCliente = new HashMap<>();
-
-        for (TransacaoModel transacao : transacoes) {
-            String ccOrigem = transacao.getCcOrigem();
-
-            if( clienteRepository.existsByNumConta(ccOrigem)){ 
-                if (!transacoesPorCliente.containsKey(ccOrigem)) {
-                    transacoesPorCliente.put(ccOrigem, new ArrayList<>());
-                }
-                transacoesPorCliente.get(ccOrigem).add(transacao);
-            }
-
-            String ccDestino = transacao.getCcDestino();
-
-            if( clienteRepository.existsByNumConta(ccDestino)){   
-                if (!transacoesPorCliente.containsKey(ccDestino)) {
-                    transacoesPorCliente.put(ccDestino, new ArrayList<>());
-                }
-                transacoesPorCliente.get(ccDestino).add(transacao);
-            }
-        }
-        return transacoesPorCliente;
-    }
-
-    public Map<String, Map<LocalDate, List<TransacaoModel>>> getExtratoClientePorData(String numConta, PeriodoDataDto periodo){
-
-        List<TransacaoModel> transacoesNumConta = listarTransacoesDaConta(numConta);
+        List<TransacaoModel> transacoesNumConta = getExtratoPorConta(numConta);
 
         List<TransacaoModel> extratoNoPeriodo = new ArrayList<>();
         for( TransacaoModel transacao : transacoesNumConta) {
@@ -193,7 +212,7 @@ public class InformacoesDeClienteService {
         return retorno;
     }
 
-    public List<TransacaoModel> listarTransacoesDaConta(String numConta){
+    public List<TransacaoModel> getExtratoPorConta(String numConta){
 
         List<TransacaoModel> transacoes = transacaoRepository.findAll();
         List<TransacaoModel> transacoesNumConta = new ArrayList<>();
