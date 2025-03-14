@@ -14,12 +14,12 @@ import com.amanda.transacoes.models.TransacaoModel;
 import com.amanda.transacoes.repositories.TransacaoRepository;
 
 @Service
-public class RelatorioOperacionalService {
+public class InformacoesOperacionaisService {
     
     @Autowired
     private TransacaoRepository transacaoRepository;
 
-    public RelatorioOperacionalDto getRelatorioOperacoes() {
+    public RelatorioOperacionalDto getOperacoes() {
         List<TransacaoModel> transacoes = transacaoRepository.findAll();
 
         int quantidadeCredito = 0;
@@ -47,7 +47,7 @@ public class RelatorioOperacionalService {
         return relatorio;
     }
 
-    public RelatorioOperacionalDto getRelatorioTipoOperacoes() {
+    public RelatorioOperacionalDto getTipoOperacoes() {
         List<TransacaoModel> transacoes = transacaoRepository.findAll();
 
         int quantidadeDeposito = 0;
@@ -97,7 +97,7 @@ public class RelatorioOperacionalService {
         return relatorio;
     }
 
-    public RelatorioOperacionalDto getRelatorioSituacaoOperacao() {
+    public RelatorioOperacionalDto getSituacaoOperacao() {
         List<TransacaoModel> transacoes = transacaoRepository.findAll();
 
         int quantidadePendente = 0;
