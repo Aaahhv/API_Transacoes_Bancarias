@@ -14,7 +14,7 @@ public class RelatorioOperacionalDto {
         this.movimentacoes = new HashMap<>();
     }
 
-    public void adicionarOperacao(String nome, MovimentacaoDto movimentacao) {
+    public void adicionarMovimentacao(String nome, MovimentacaoDto movimentacao) {
         movimentacoes.put(nome, movimentacao);
     }
 
@@ -23,5 +23,32 @@ public class RelatorioOperacionalDto {
         Map<String, Map<String, MovimentacaoDto>> wrapper = new HashMap<>();
         wrapper.put(nomeWrapper, movimentacoes); 
         return wrapper;
+    }
+
+    public static class MovimentacaoDto {
+
+        private int quantidade;
+        private double valor;
+    
+        public MovimentacaoDto(int quantidade, double valor) {
+            this.quantidade = quantidade;
+            this.valor = valor;
+        }
+    
+        public int getQuantidade() {
+            return quantidade;
+        }
+    
+        public void setQuantidade(int quantidade) {
+            this.quantidade = quantidade;
+        }
+    
+        public double getValor() {
+            return valor;
+        }
+    
+        public void setValor(double valor) {
+            this.valor = valor;
+        }
     }
 }
