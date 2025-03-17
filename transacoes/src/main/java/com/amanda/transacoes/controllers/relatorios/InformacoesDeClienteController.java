@@ -57,6 +57,6 @@ public class InformacoesDeClienteController {
      
     @GetMapping("/ExtratoDeClienteDurantePeriodo")
     public  Map<String, Map<LocalDate, List<TransacaoModel>>> readERRADo(String numConta, PeriodoDataDto periodo) {   
-        return relatorioService.getExtratoClientePorDia(numConta, periodo);
+        return relatorioService.getExtratoClientePorDiaDurantePeriodo(numConta, periodo);
     } 
 }

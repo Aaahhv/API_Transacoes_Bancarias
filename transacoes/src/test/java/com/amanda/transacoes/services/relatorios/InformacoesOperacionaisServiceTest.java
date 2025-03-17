@@ -1,4 +1,4 @@
-package com.amanda.transacoes.services;
+package com.amanda.transacoes.services.relatorios;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.times;
@@ -22,7 +22,6 @@ import com.amanda.transacoes.enums.SituacaoOperacaoEnum;
 import com.amanda.transacoes.enums.TipoOperacaoEnum;
 import com.amanda.transacoes.models.TransacaoModel;
 import com.amanda.transacoes.repositories.TransacaoRepository;
-import com.amanda.transacoes.services.relatorios.InformacoesOperacionaisService;
 
 @ExtendWith(MockitoExtension.class)
 public class InformacoesOperacionaisServiceTest {

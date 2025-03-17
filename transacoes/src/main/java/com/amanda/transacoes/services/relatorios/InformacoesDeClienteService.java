@@ -6,7 +6,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -21,6 +25,7 @@ import com.amanda.transacoes.models.ClienteModel;
 import com.amanda.transacoes.models.TransacaoModel;
 import com.amanda.transacoes.repositories.ClienteRepository;
 import com.amanda.transacoes.repositories.TransacaoRepository;
+import java.util.stream.Stream;
 
 @Service
 public class InformacoesDeClienteService {
@@ -32,12 +37,11 @@ public class InformacoesDeClienteService {
     private TransacaoRepository transacaoRepository;
 
     public Map<String, Double> getSaldoBanco() {
-        List<ClienteModel> clientes = clienteRepository.findAll();
-
-        double saldoBanco = 0;
-        for(ClienteModel cliente: clientes){
-            saldoBanco += cliente.getSaldo();
-        }
+        
+        double saldoBanco = clienteRepository.findAll()
+            .stream()
+            .mapToDouble(ClienteModel::getSaldo)
+            .sum();
 
         Map<String, Double> relatorio = new  HashMap<>();
 
@@ -47,14 +51,11 @@ public class InformacoesDeClienteService {
     }
 
     public Map<String, Integer> getQuantidadeClientesAtivos() {
-        List<ClienteModel> clientes = clienteRepository.findAll();
 
-        int clientesAtivos = 0;
-        for(ClienteModel cliente: clientes){
-            if(cliente.getAtivo()){
-                clientesAtivos += 1;
-            }
-        }
+        int clientesAtivos = (int) clienteRepository.findAll()   
+            .stream()
+            .filter(ClienteModel::getAtivo)
+            .count();
 
         Map<String, Integer> relatorio = new  HashMap<>();
 
@@ -62,52 +63,47 @@ public class InformacoesDeClienteService {
 
         return relatorio;
     }
-    
-    public List<ClienteETiposOperacaoDto> getQuantidadeDeTipoOperacaoPorCliente(){
+
+    public List<ClienteETiposOperacaoDto> getQuantidadeDeTipoOperacaoPorCliente() {
         List<TransacaoModel> transacoes = transacaoRepository.findAll();
 
-        Map<String, List<TransacaoModel>> transacoesPorContaMap = listarTransacoesPorConta(transacoes);
-        List<ClienteETiposOperacaoDto> listaClientes = new ArrayList<>();
+        List<ClienteETiposOperacaoDto> listaClientes =  listarTransacoesPorConta(transacoes).entrySet().stream()
+            .map(entry -> {
+                String ccCliente = entry.getKey();
+                List<TransacaoModel> transacoesPorConta = entry.getValue();
 
-        for(Map.Entry<String, List<TransacaoModel>> entry : transacoesPorContaMap.entrySet()){
-            List<TransacaoModel> transacoesPorConta = entry.getValue();
-            String ccCliente = entry.getKey();
+                ClienteModel cliente = clienteRepository.findByNumConta(ccCliente)
+                    .orElse(null);
 
-            if( clienteRepository.existsByNumConta(ccCliente)){ 
-                ClienteModel cliente = clienteRepository.findByNumConta(ccCliente).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado."));
                 ClienteETiposOperacaoDto clienteDto = new ClienteETiposOperacaoDto(cliente);
-                
-                for (TransacaoModel transacao : transacoesPorConta) {
-                    clienteDto.incrementarTipoOperacao(transacao.getTipoOperacao());
-                }
-                listaClientes.add(clienteDto);
-            }
-        }
-        return  listaClientes;
+
+                transacoesPorConta.forEach(transacao -> clienteDto.incrementarTipoOperacao(transacao.getTipoOperacao()));
+
+                return clienteDto;
+            })
+            .collect(Collectors.toList()); 
+
+        return listaClientes;
     }
+
 
     public Map<String, List<TransacaoModel>> listarTransacoesPorConta(List<TransacaoModel> transacoes) {
         Map<String, List<TransacaoModel>> transacoesPorCliente = new HashMap<>();
 
-        for (TransacaoModel transacao : transacoes) {
-            String ccOrigem = transacao.getCcOrigem();
+        transacoesPorCliente = transacoes.stream()
+            .flatMap(transacao -> Stream.of(
+                transacao.getCcOrigem() == null || transacao.getCcOrigem().isEmpty() ? null 
+                    : Map.entry(transacao.getCcOrigem(), transacao),
+                transacao.getCcDestino() == null || transacao.getCcDestino().isEmpty() ? null 
+                    : Map.entry(transacao.getCcDestino(), transacao)
+            ))
+            .filter(Objects::nonNull)                                                               // essa funcao ja remove entradas nulas 
+            .filter(entry -> clienteRepository.existsByNumConta(entry.getKey()))                    // e entradas que numConta nao existem
+            .collect(Collectors.groupingBy(
+                Map.Entry::getKey,
+                Collectors.mapping(Map.Entry::getValue, Collectors.toList()) 
+            ));
 
-            if( clienteRepository.existsByNumConta(ccOrigem)){ 
-                if (!transacoesPorCliente.containsKey(ccOrigem)) {
-                    transacoesPorCliente.put(ccOrigem, new ArrayList<>());
-                }
-                transacoesPorCliente.get(ccOrigem).add(transacao);
-            }
-
-            String ccDestino = transacao.getCcDestino();
-
-            if( clienteRepository.existsByNumConta(ccDestino)){   
-                if (!transacoesPorCliente.containsKey(ccDestino)) {
-                    transacoesPorCliente.put(ccDestino, new ArrayList<>());
-                }
-                transacoesPorCliente.get(ccDestino).add(transacao);
-            }
-        }
         return transacoesPorCliente;
     }
 
@@ -130,32 +126,18 @@ public class InformacoesDeClienteService {
     }
 
     public Map<YearMonth,  List<ClienteEValorDto>> getClienteCincoMilPorMes() {
-        List<TransacaoModel> transacoes = transacaoRepository.findAll();
-
-        Map<YearMonth, Map<ClienteModel, Double>> transferenciasPorMes = new HashMap<>();
-
-        transferenciasPorMes = transferenciaTotalDeClientesPorMes(transacoes);
         
-        Map<YearMonth, List<ClienteEValorDto>> clientesAcimaDe5000PorMes = new HashMap<>();
+        TreeMap<YearMonth, List<ClienteEValorDto>> retorno =  transferenciaTotalDeClientesPorMes(transacaoRepository.findAll()).entrySet().stream()
+        .map(entry -> Map.entry(entry.getKey(), 
+            entry.getValue().entrySet().stream() 
+                .filter(clienteEntry -> clienteEntry.getValue() > 5000)             //remove clientes abaixo de 5000
+                .map(clienteEntry -> new ClienteEValorDto(clienteEntry.getKey(), clienteEntry.getValue()))  
+                .collect(Collectors.toList())
+        ))
+        .filter(entry -> !entry.getValue().isEmpty())                              // remove meses sem clientes
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a, TreeMap::new));
 
-        for (Map.Entry<YearMonth, Map<ClienteModel, Double>> mes : transferenciasPorMes.entrySet()) {
-            Map<ClienteModel, Double> clienteEValor = mes.getValue();
-            
-            List<ClienteEValorDto> clientesAcima5000 = new ArrayList<>();
-            for (Map.Entry<ClienteModel, Double> clienteEntry : clienteEValor.entrySet()) {
-                if (clienteEntry.getValue().compareTo(Double.valueOf(5000)) > 0) {
-                    ClienteEValorDto clienteRico = new ClienteEValorDto(clienteEntry.getKey(), clienteEntry.getValue());
-                    clientesAcima5000.add(clienteRico);
-                }
-            }
-            if (!clientesAcima5000.isEmpty()) {
-                clientesAcimaDe5000PorMes.put(mes.getKey(), clientesAcima5000);
-            }
-        }
-
-        TreeMap<YearMonth, List<ClienteEValorDto>> clientesAcimaDe5000PorMesOrdenado = new TreeMap<>(clientesAcimaDe5000PorMes);
-
-        return clientesAcimaDe5000PorMesOrdenado;
+        return retorno;
     }
 
     public Map<YearMonth, Map<ClienteModel, Double>> transferenciaTotalDeClientesPorMes(List<TransacaoModel> transacoes) {
@@ -189,28 +171,25 @@ public class InformacoesDeClienteService {
         return transferenciaPorMes;
     }
 
-    public Map<String, Map<LocalDate, List<TransacaoModel>>> getExtratoClientePorDia(String numConta, PeriodoDataDto periodo){
-
-        List<TransacaoModel> transacoesNumConta = getExtratoPorConta(numConta);
-
-        List<TransacaoModel> extratoNoPeriodo = new ArrayList<>();
-        for( TransacaoModel transacao : transacoesNumConta) {
-            if( transacao.getDataTransacao().isAfter(periodo.getDataInicio()) &&
-                transacao.getDataTransacao().isBefore(periodo.getDataFim())){
-                    extratoNoPeriodo.add(transacao);
-            }
-        }
+    public Map<String, Map<LocalDate, List<TransacaoModel>>> getExtratoClientePorDiaDurantePeriodo(String numConta, PeriodoDataDto periodo){
         
-        Map<LocalDate, List<TransacaoModel>> extratoAgrupadoPorDia = AgruparExtratoPorDia(extratoNoPeriodo);
+        Map<LocalDate, List<TransacaoModel>> extrato  =  getExtratoPorConta(numConta).stream()
+            .filter(transacao -> 
+                transacao.getDataTransacao().isAfter(periodo.getDataInicio()) &&
+                transacao.getDataTransacao().isBefore(periodo.getDataFim())
+            ) 
+            .collect(Collectors.groupingBy(
+                transacao -> LocalDate.from(transacao.getDataTransacao()),      
+                TreeMap::new,                                                   // dias ordenados
+                Collectors.toList()                                             // agrupa as transacoes em lista
+            ));
 
-        Map<LocalDate, List<TransacaoModel>> extratoOrdenado = new TreeMap<>(extratoAgrupadoPorDia);
+       Map<String, Map<LocalDate, List<TransacaoModel>>> retorno = new HashMap<>();
 
-        Map<String, Map<LocalDate, List<TransacaoModel>>> retorno = new HashMap<>();
+       retorno.put(numConta, extrato);
 
-        retorno.put(numConta, extratoOrdenado);
-
-        return retorno;
-    }
+       return retorno;
+    } 
 
     public List<TransacaoModel> getExtratoPorConta(String numConta){
 
@@ -224,20 +203,5 @@ public class InformacoesDeClienteService {
             }
         }
         return transacoesNumConta;
-    }
- 
-    public Map<LocalDate, List<TransacaoModel>> AgruparExtratoPorDia(List<TransacaoModel> transacoes){
-    
-        Map<LocalDate, List<TransacaoModel>> extratoPorDia = new HashMap<>();
-
-        for( TransacaoModel transacao : transacoes){ 
-
-            LocalDate dia = LocalDate.from(transacao.getDataTransacao());
-
-            extratoPorDia.putIfAbsent(dia, new ArrayList<>());
-
-            extratoPorDia.get(dia).add(transacao);
-        }
-        return extratoPorDia;
     }
 }
