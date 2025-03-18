@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
@@ -127,7 +126,7 @@ public class InformacoesDeClienteService {
 
     public Map<YearMonth,  List<ClienteEValorDto>> getClienteCincoMilPorMes() {
         
-        TreeMap<YearMonth, List<ClienteEValorDto>> retorno =  transferenciaTotalDeClientesPorMes(transacaoRepository.findAll()).entrySet().stream()
+        TreeMap<YearMonth, List<ClienteEValorDto>> retorno =  transferenciaDeClientePorMes(transacaoRepository.findAll()).entrySet().stream()
         .map(entry -> Map.entry(entry.getKey(), 
             entry.getValue().entrySet().stream() 
                 .filter(clienteEntry -> clienteEntry.getValue() > 5000)             //remove clientes abaixo de 5000
@@ -140,35 +139,36 @@ public class InformacoesDeClienteService {
         return retorno;
     }
 
-    public Map<YearMonth, Map<ClienteModel, Double>> transferenciaTotalDeClientesPorMes(List<TransacaoModel> transacoes) {
+    private Map<YearMonth, Map<ClienteModel, Double>> transferenciaDeClientePorMes(List<TransacaoModel> transacoes){
 
-        Map<YearMonth, Map<ClienteModel, Double>> transferenciaPorMes = new HashMap<>();
+        Map<YearMonth, Map<ClienteModel, Double>> retorno = listarTransacoesPorMes(transacoes).entrySet().stream()
+            .collect(Collectors.toMap(
+                    entry -> entry.getKey(),
+                    entry -> listarTransacoesPorConta(entry.getValue()).entrySet().stream()
+                        .map(contaEntry -> {
+                            String numConta = contaEntry.getKey();
+                            ClienteModel cliente = clienteRepository.findByNumConta(numConta)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado."));
+                            
+                            double total = contaEntry.getValue().stream()
+                                .mapToDouble(TransacaoModel::getValor)
+                                .sum();
+        
+                            return Map.entry(cliente, total);
+                        })
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)) 
+            ));
+        return retorno;
+    }
 
-        for (TransacaoModel transacao : transacoes) {
-            YearMonth mes = YearMonth.from(transacao.getDataTransacao());
-
-            transferenciaPorMes.putIfAbsent(mes, new HashMap<>());
-            
-            Double valor = transacao.getValor();
-            Map<ClienteModel, Double> gastosClientes = transferenciaPorMes.get(mes);
-            
-            String ccOrigem = transacao.getCcOrigem();
-            if(clienteRepository.existsByNumConta(ccOrigem)){
-                //pensar em como retirar essa excessao http daqui
-                //o problema eh que findByNumConta retorna Optional<ClienteModel>, que pode ser vazio
-                ClienteModel clienteOrigem = clienteRepository.findByNumConta(ccOrigem).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado."));
-                gastosClientes.put(clienteOrigem, gastosClientes.getOrDefault(clienteOrigem, 0.0) + valor);
-            }
-
-            String ccDestino = transacao.getCcDestino(); 
-            if(clienteRepository.existsByNumConta(ccDestino)){
-                //pensar em como retirar essa excessao http daqui
-                //o problema eh que findByNumConta retorna Optional<ClienteModel>, que pode ser vazio
-                ClienteModel clienteDestino = clienteRepository.findByNumConta(ccDestino).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Operação não encontrada."));
-                gastosClientes.put(clienteDestino, gastosClientes.getOrDefault(clienteDestino, 0.0) + valor);
-            }
-        }
-        return transferenciaPorMes;
+    private Map<YearMonth, List<TransacaoModel>> listarTransacoesPorMes(List<TransacaoModel> transacoes) {
+    
+        Map<YearMonth,  List<TransacaoModel>> transacoesPorMes = transacoes.stream()
+            .collect(Collectors.groupingBy(
+                transacao -> YearMonth.from(transacao.getDataTransacao()) 
+            ));
+           
+        return transacoesPorMes;
     }
 
     public Map<String, Map<LocalDate, List<TransacaoModel>>> getExtratoClientePorDiaDurantePeriodo(String numConta, PeriodoDataDto periodo){
