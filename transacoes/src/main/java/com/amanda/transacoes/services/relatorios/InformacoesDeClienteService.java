@@ -1,19 +1,17 @@
 package com.amanda.transacoes.services.relatorios;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.beans.factory.annotation.Autowired; 
+import org.springframework.stereotype.Service; 
 
 import com.amanda.transacoes.dtos.PeriodoDataDto;
 import com.amanda.transacoes.dtos.relatorios.ClienteETiposOperacaoDto;
@@ -71,8 +69,7 @@ public class InformacoesDeClienteService {
                 String ccCliente = entry.getKey();
                 List<TransacaoModel> transacoesPorConta = entry.getValue();
 
-                ClienteModel cliente = clienteRepository.findByNumConta(ccCliente)
-                    .orElse(null);
+                ClienteModel cliente = clienteRepository.findByNumConta(ccCliente).get();  //aqui, findByNumConta() nao dever retornar Optional<null>, por isso o get()
 
                 ClienteETiposOperacaoDto clienteDto = new ClienteETiposOperacaoDto(cliente);
 
@@ -85,19 +82,20 @@ public class InformacoesDeClienteService {
         return listaClientes;
     }
 
-
+    //Essa funcao filtra as transacoes em que a conta corrente (seja ccOrigem ou ccDestino) nao existe no banco de dados
     public Map<String, List<TransacaoModel>> listarTransacoesPorConta(List<TransacaoModel> transacoes) {
         Map<String, List<TransacaoModel>> transacoesPorCliente = new HashMap<>();
 
         transacoesPorCliente = transacoes.stream()
-            .flatMap(transacao -> Stream.of(
-                transacao.getCcOrigem() == null || transacao.getCcOrigem().isEmpty() ? null 
-                    : Map.entry(transacao.getCcOrigem(), transacao),
-                transacao.getCcDestino() == null || transacao.getCcDestino().isEmpty() ? null 
-                    : Map.entry(transacao.getCcDestino(), transacao)
-            ))
-            .filter(Objects::nonNull)                                                               // essa funcao ja remove entradas nulas 
-            .filter(entry -> clienteRepository.existsByNumConta(entry.getKey()))                    // e entradas que numConta nao existem
+            .flatMap(transacao -> Stream.concat(
+                (transacao.getCcOrigem() == null || transacao.getCcOrigem().isEmpty()) 
+                    ? Stream.empty() 
+                    : Stream.of(Map.entry(transacao.getCcOrigem(), transacao)),
+                (transacao.getCcDestino() == null || transacao.getCcDestino().isEmpty()) 
+                    ? Stream.empty() 
+                    : Stream.of(Map.entry(transacao.getCcDestino(), transacao))
+            ))                                             
+            .filter(entry -> clienteRepository.existsByNumConta(entry.getKey()))               
             .collect(Collectors.groupingBy(
                 Map.Entry::getKey,
                 Collectors.mapping(Map.Entry::getValue, Collectors.toList()) 
@@ -108,7 +106,8 @@ public class InformacoesDeClienteService {
 
     public Map<String,List<TransacaoModel>> getExtratoClienteComFiltro(String numConta, OperacaoEnum operacao, TipoOperacaoEnum tipoOperacaoEnum){
 
-        List<TransacaoModel> transacoes = getExtratoPorConta(numConta);
+        List<TransacaoModel> transacoesTodas = transacaoRepository.findAll();
+        List<TransacaoModel> transacoes = getExtratoPorConta(transacoesTodas, numConta);
         List<TransacaoModel> transacoesFiltradas = new ArrayList<>();
 
         for(TransacaoModel transacao: transacoes){
@@ -124,60 +123,52 @@ public class InformacoesDeClienteService {
         return retorno;
     }
 
-    public Map<YearMonth,  List<ClienteEValorDto>> getClienteCincoMilPorMes() {
+    public Map<YearMonth,  List<ClienteEValorDto>> getClientesCincoMilNoMes(YearMonth mes) {
         
-        TreeMap<YearMonth, List<ClienteEValorDto>> retorno =  transferenciaDeClientePorMes(transacaoRepository.findAll()).entrySet().stream()
-        .map(entry -> Map.entry(entry.getKey(), 
-            entry.getValue().entrySet().stream() 
-                .filter(clienteEntry -> clienteEntry.getValue() > 5000)             //remove clientes abaixo de 5000
-                .map(clienteEntry -> new ClienteEValorDto(clienteEntry.getKey(), clienteEntry.getValue()))  
-                .collect(Collectors.toList())
-        ))
-        .filter(entry -> !entry.getValue().isEmpty())                              // remove meses sem clientes
-        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a, TreeMap::new));
-
-        return retorno;
+        List<ClienteEValorDto> retorno =  transferenciaTotalDasContaNoMes(mes).entrySet().stream()
+        .filter(Entry -> Entry.getValue() >= 5000)            
+                .map(clienteEntry -> new ClienteEValorDto(
+                                            clienteRepository.findByNumConta(clienteEntry.getKey()).get(), //aqui, findByNumConta() nao dever retornar Optional<null>, por isso o get()
+                                            clienteEntry.getValue()))  
+                .collect(Collectors.toList());
+        
+        Map<YearMonth,  List<ClienteEValorDto>>  retorno2 = new HashMap<>();
+        retorno2.put(mes, retorno);
+        
+        return retorno2;
     }
 
-    private Map<YearMonth, Map<ClienteModel, Double>> transferenciaDeClientePorMes(List<TransacaoModel> transacoes){
+    private Map<String, Double> transferenciaTotalDasContaNoMes(YearMonth mes){
 
-        Map<YearMonth, Map<ClienteModel, Double>> retorno = listarTransacoesPorMes(transacoes).entrySet().stream()
+        List<TransacaoModel> transacoesNoMes = listarTransacoesNoMes(mes);
+
+        Map<String, Double> retorno = listarTransacoesPorConta(transacoesNoMes).entrySet().stream()
             .collect(Collectors.toMap(
-                    entry -> entry.getKey(),
-                    entry -> listarTransacoesPorConta(entry.getValue()).entrySet().stream()
-                        .map(contaEntry -> {
-                            String numConta = contaEntry.getKey();
-                            ClienteModel cliente = clienteRepository.findByNumConta(numConta)
-                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente não encontrado."));
-                            
-                            double total = contaEntry.getValue().stream()
-                                .mapToDouble(TransacaoModel::getValor)
-                                .sum();
-        
-                            return Map.entry(cliente, total);
-                        })
-                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)) 
-            ));
+                entry -> entry.getKey(),
+                entry -> entry.getValue().stream()
+                          .mapToDouble(TransacaoModel::getValor)
+                          .sum()                
+                )
+            );
+
         return retorno;
     }
 
-    private Map<YearMonth, List<TransacaoModel>> listarTransacoesPorMes(List<TransacaoModel> transacoes) {
-    
-        Map<YearMonth,  List<TransacaoModel>> transacoesPorMes = transacoes.stream()
-            .collect(Collectors.groupingBy(
-                transacao -> YearMonth.from(transacao.getDataTransacao()) 
-            ));
-           
-        return transacoesPorMes;
+    public List<TransacaoModel> listarTransacoesNoMes(YearMonth mes) {
+ 
+            LocalDate inicioDia = mes.atDay(1);
+            LocalDate fimDia = mes.atEndOfMonth();
+
+            LocalDateTime inicio = inicioDia.atTime(0, 0, 0);
+            LocalDateTime fim = fimDia.atTime(23, 59, 59);
+
+        return transacaoRepository.findByDataTransacaoBetween(inicio, fim);
     }
 
     public Map<String, Map<LocalDate, List<TransacaoModel>>> getExtratoClientePorDiaDurantePeriodo(String numConta, PeriodoDataDto periodo){
         
-        Map<LocalDate, List<TransacaoModel>> extrato  =  getExtratoPorConta(numConta).stream()
-            .filter(transacao -> 
-                transacao.getDataTransacao().isAfter(periodo.getDataInicio()) &&
-                transacao.getDataTransacao().isBefore(periodo.getDataFim())
-            ) 
+        List<TransacaoModel> transacoesDuranteOPeriodo = transacaoRepository.findByDataTransacaoBetween(periodo.getDataInicio(), periodo.getDataFim());
+        Map<LocalDate, List<TransacaoModel>> extrato  =  getExtratoPorConta(transacoesDuranteOPeriodo, numConta).stream()
             .collect(Collectors.groupingBy(
                 transacao -> LocalDate.from(transacao.getDataTransacao()),      
                 TreeMap::new,                                                   // dias ordenados
@@ -191,17 +182,13 @@ public class InformacoesDeClienteService {
        return retorno;
     } 
 
-    public List<TransacaoModel> getExtratoPorConta(String numConta){
+    public List<TransacaoModel> getExtratoPorConta(List<TransacaoModel> transacoes, String numConta){
 
-        List<TransacaoModel> transacoes = transacaoRepository.findAll();
-        List<TransacaoModel> transacoesNumConta = new ArrayList<>();
+        List<TransacaoModel> transacoesNumConta = transacoes.stream()
+            .filter(transacao -> (transacao.getCcOrigem()  != null && !transacao.getCcOrigem().isEmpty()  && transacao.getCcOrigem().equals(numConta))  ||
+                                 (transacao.getCcDestino() != null && !transacao.getCcDestino().isEmpty() && transacao.getCcDestino().equals(numConta)))
+            .toList();
 
-        for(TransacaoModel transacao : transacoes){
-            if((transacao.getCcOrigem() != null && !transacao.getCcOrigem().isEmpty() && transacao.getCcOrigem().equals(numConta)) ||
-            (transacao.getCcDestino() != null && !transacao.getCcDestino().isEmpty() && transacao.getCcDestino().equals(numConta))) {
-                transacoesNumConta.add(transacao);
-            }
-        }
         return transacoesNumConta;
     }
 }

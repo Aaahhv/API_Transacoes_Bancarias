@@ -41,8 +41,8 @@ public class InformacoesDeClienteController {
     } 
     
     @GetMapping("/ClientesMaisDeCincoMilAoMes")
-    public  Map<YearMonth,  List<ClienteEValorDto>> readClienteCincoMilPorMes() {   
-        return relatorioService.getClienteCincoMilPorMes();
+    public  Map<YearMonth,  List<ClienteEValorDto>> readClienteCincoMilNoMes(YearMonth mes) {   
+        return relatorioService.getClientesCincoMilNoMes(mes);
     } 
 
     @GetMapping("/ExtratoClienteComFiltro")
