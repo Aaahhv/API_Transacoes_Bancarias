@@ -3,7 +3,6 @@ package com.amanda.transacoes.services.relatorios;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -107,15 +106,10 @@ public class InformacoesDeClienteService {
     public Map<String,List<TransacaoModel>> getExtratoClienteComFiltro(String numConta, OperacaoEnum operacao, TipoOperacaoEnum tipoOperacaoEnum){
 
         List<TransacaoModel> transacoesTodas = transacaoRepository.findAll();
-        List<TransacaoModel> transacoes = getExtratoPorConta(transacoesTodas, numConta);
-        List<TransacaoModel> transacoesFiltradas = new ArrayList<>();
-
-        for(TransacaoModel transacao: transacoes){
-            if((transacao.getOperacao() != null      &&  transacao.getOperacao() == operacao) &&
-               (transacao.getTipoOperacao() != null  &&  transacao.getTipoOperacao() == tipoOperacaoEnum)){
-                transacoesFiltradas.add(transacao);
-            }
-        }
+        List<TransacaoModel> transacoes = getExtratoDaConta(transacoesTodas, numConta);
+        List<TransacaoModel> transacoesFiltradas = transacoes.stream()
+            .filter(transacao -> (transacao.getOperacao() != null      &&  transacao.getOperacao() == operacao) &&
+                                 (transacao.getTipoOperacao() != null  &&  transacao.getTipoOperacao() == tipoOperacaoEnum)).toList();
 
         Map<String,List<TransacaoModel>> retorno = new HashMap<>();
         retorno.put(numConta,transacoesFiltradas);
@@ -168,11 +162,11 @@ public class InformacoesDeClienteService {
     public Map<String, Map<LocalDate, List<TransacaoModel>>> getExtratoClientePorDiaDurantePeriodo(String numConta, PeriodoDataDto periodo){
         
         List<TransacaoModel> transacoesDuranteOPeriodo = transacaoRepository.findByDataTransacaoBetween(periodo.getDataInicio(), periodo.getDataFim());
-        Map<LocalDate, List<TransacaoModel>> extrato  =  getExtratoPorConta(transacoesDuranteOPeriodo, numConta).stream()
+        Map<LocalDate, List<TransacaoModel>> extrato  =  getExtratoDaConta(transacoesDuranteOPeriodo, numConta).stream()
             .collect(Collectors.groupingBy(
                 transacao -> LocalDate.from(transacao.getDataTransacao()),      
                 TreeMap::new,                                                   // dias ordenados
-                Collectors.toList()                                             // agrupa as transacoes em lista
+                Collectors.toList()                                           
             ));
 
        Map<String, Map<LocalDate, List<TransacaoModel>>> retorno = new HashMap<>();
@@ -182,7 +176,7 @@ public class InformacoesDeClienteService {
        return retorno;
     } 
 
-    public List<TransacaoModel> getExtratoPorConta(List<TransacaoModel> transacoes, String numConta){
+    public List<TransacaoModel> getExtratoDaConta(List<TransacaoModel> transacoes, String numConta){
 
         List<TransacaoModel> transacoesNumConta = transacoes.stream()
             .filter(transacao -> (transacao.getCcOrigem()  != null && !transacao.getCcOrigem().isEmpty()  && transacao.getCcOrigem().equals(numConta))  ||
