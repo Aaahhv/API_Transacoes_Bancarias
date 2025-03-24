@@ -2,6 +2,7 @@ package com.amanda.transacoes.services.relatorios;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -109,9 +110,9 @@ public class InformacoesDeClienteService {
 
     public Map<String,List<TransacaoModel>> getExtratoClienteComFiltro(String numConta, OperacaoEnum operacao, TipoOperacaoEnum tipoOperacaoEnum){
 
-        List<TransacaoModel> transacoesTodas = transacaoRepository.findAll();
-        List<TransacaoModel> transacoes = getExtratoDaConta(transacoesTodas, numConta);
-        List<TransacaoModel> transacoesFiltradas = transacoes.stream()
+        List<TransacaoModel> transacoes = transacaoRepository.findAll();
+        List<TransacaoModel> transacoesDoCliente = getExtratoDaConta(transacoes, numConta);
+        List<TransacaoModel> transacoesFiltradas = transacoesDoCliente.stream()
             .filter(transacao -> (transacao.getOperacao() != null      &&  transacao.getOperacao() == operacao) &&
                                  (transacao.getTipoOperacao() != null  &&  transacao.getTipoOperacao() == tipoOperacaoEnum)).toList();
 
@@ -123,17 +124,17 @@ public class InformacoesDeClienteService {
 
     public Map<YearMonth,  List<ClienteEValorDto>> getClientesCincoMilNoMes(YearMonth mes) {
         
-        List<ClienteEValorDto> retorno =  transferenciaTotalDasContaNoMes(mes).entrySet().stream()
+        List<ClienteEValorDto> clienteEValorDto =  transferenciaTotalDasContaNoMes(mes).entrySet().stream()
         .filter(Entry -> Entry.getValue() >= 5000)            
                 .map(clienteEntry -> new ClienteEValorDto(
                                             clienteRepository.findByNumConta(clienteEntry.getKey()).get(), //aqui, findByNumConta() nao dever retornar Optional<null>, por isso o get()
                                             clienteEntry.getValue()))  
                 .collect(Collectors.toList());
         
-        Map<YearMonth,  List<ClienteEValorDto>>  retorno2 = new HashMap<>();
-        retorno2.put(mes, retorno);
+        Map<YearMonth,  List<ClienteEValorDto>>  retorno = new HashMap<>();
+        retorno.put(mes, clienteEValorDto);
         
-        return retorno2;
+        return retorno;
     }
 
     private Map<String, Double> transferenciaTotalDasContaNoMes(YearMonth mes){
@@ -169,11 +170,13 @@ public class InformacoesDeClienteService {
        return retorno;
     } 
 
+    //Essa funcao retornar o extrato com as transacoes ordenadas por datahora
     public List<TransacaoModel> getExtratoDaConta(List<TransacaoModel> transacoes, String numConta){
 
         List<TransacaoModel> transacoesNumConta = transacoes.stream()
             .filter(transacao -> (transacao.getCcOrigem()  != null && !transacao.getCcOrigem().isEmpty()  && transacao.getCcOrigem().equals(numConta))  ||
                                  (transacao.getCcDestino() != null && !transacao.getCcDestino().isEmpty() && transacao.getCcDestino().equals(numConta)))
+            .sorted(Comparator.comparing(TransacaoModel::getDataTransacao))
             .toList();
 
         return transacoesNumConta;
