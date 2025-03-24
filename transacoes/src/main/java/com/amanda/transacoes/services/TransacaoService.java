@@ -1,5 +1,8 @@
 package com.amanda.transacoes.services;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -113,5 +116,17 @@ public class TransacaoService {
         transacaoValidator.validateDeleteById(id);
     
         transacaoRepository.deleteById(id);
+    }
+
+    
+    public List<TransacaoModel> findByYearMonthBetween(YearMonth mes){
+
+        LocalDate inicioDia = mes.atDay(1);
+        LocalDate fimDia = mes.atEndOfMonth();
+
+        LocalDateTime inicio = inicioDia.atTime(0, 0, 0);
+        LocalDateTime fim = fimDia.atTime(23, 59, 59);
+
+        return transacaoRepository.findByDataTransacaoBetween(inicio, fim);
     }
 }

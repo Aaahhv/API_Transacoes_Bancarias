@@ -1,7 +1,6 @@
 package com.amanda.transacoes.services.relatorios;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.HashMap;
 import java.util.List;
@@ -21,6 +20,8 @@ import com.amanda.transacoes.models.ClienteModel;
 import com.amanda.transacoes.models.TransacaoModel;
 import com.amanda.transacoes.repositories.ClienteRepository;
 import com.amanda.transacoes.repositories.TransacaoRepository;
+import com.amanda.transacoes.services.TransacaoService;
+
 import java.util.stream.Stream;
 
 @Service
@@ -31,6 +32,9 @@ public class InformacoesDeClienteService {
 
     @Autowired
     private TransacaoRepository transacaoRepository;
+
+    @Autowired
+    private TransacaoService transacaoService;
 
     public Map<String, Double> getSaldoBanco() {
         
@@ -134,9 +138,9 @@ public class InformacoesDeClienteService {
 
     private Map<String, Double> transferenciaTotalDasContaNoMes(YearMonth mes){
 
-        List<TransacaoModel> transacoesNoMes = listarTransacoesNoMes(mes);
+        List<TransacaoModel> transacoesDoMes = transacaoService.findByYearMonthBetween(mes);
 
-        Map<String, Double> retorno = listarTransacoesPorConta(transacoesNoMes).entrySet().stream()
+        Map<String, Double> retorno = listarTransacoesPorConta(transacoesDoMes).entrySet().stream()
             .collect(Collectors.toMap(
                 entry -> entry.getKey(),
                 entry -> entry.getValue().stream()
@@ -146,17 +150,6 @@ public class InformacoesDeClienteService {
             );
 
         return retorno;
-    }
-
-    public List<TransacaoModel> listarTransacoesNoMes(YearMonth mes) {
- 
-            LocalDate inicioDia = mes.atDay(1);
-            LocalDate fimDia = mes.atEndOfMonth();
-
-            LocalDateTime inicio = inicioDia.atTime(0, 0, 0);
-            LocalDateTime fim = fimDia.atTime(23, 59, 59);
-
-        return transacaoRepository.findByDataTransacaoBetween(inicio, fim);
     }
 
     public Map<String, Map<LocalDate, List<TransacaoModel>>> getExtratoClientePorDiaDurantePeriodo(String numConta, PeriodoDataDto periodo){
