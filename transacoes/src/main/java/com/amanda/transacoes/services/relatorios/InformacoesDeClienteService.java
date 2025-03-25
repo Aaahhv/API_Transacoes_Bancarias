@@ -127,7 +127,7 @@ public class InformacoesDeClienteService {
         List<ClienteEValorDto> clienteEValorDto =  transferenciaTotalDasContaNoMes(mes).entrySet().stream()
         .filter(Entry -> Entry.getValue() >= 5000)            
                 .map(clienteEntry -> new ClienteEValorDto(
-                                            clienteRepository.findByNumConta(clienteEntry.getKey()).get(), //aqui, findByNumConta() nao dever retornar Optional<null>, por isso o get()
+                                            clienteRepository.findByNumConta(clienteEntry.getKey()).get(), //aqui, o findByNumConta() nao retorna Optional<null>, por isso o get()
                                             clienteEntry.getValue()))  
                 .collect(Collectors.toList());
         
@@ -170,12 +170,11 @@ public class InformacoesDeClienteService {
        return retorno;
     } 
 
-    //Essa funcao retornar o extrato com as transacoes ordenadas por datahora
+    //Essa funcao retorna o extrato da numConta com as transacoes ordenadas por datahora
     public List<TransacaoModel> getExtratoDaConta(List<TransacaoModel> transacoes, String numConta){
 
         List<TransacaoModel> transacoesNumConta = transacoes.stream()
-            .filter(transacao -> (transacao.getCcOrigem()  != null && !transacao.getCcOrigem().isEmpty()  && transacao.getCcOrigem().equals(numConta))  ||
-                                 (transacao.getCcDestino() != null && !transacao.getCcDestino().isEmpty() && transacao.getCcDestino().equals(numConta)))
+            .filter(transacao -> (numConta.equals(transacao.getCcOrigem())  || numConta.equals(transacao.getCcDestino())))
             .sorted(Comparator.comparing(TransacaoModel::getDataTransacao))
             .toList();
 
