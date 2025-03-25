@@ -33,6 +33,7 @@ import com.amanda.transacoes.enums.TipoOperacaoEnum;
 import com.amanda.transacoes.models.ClienteModel;
 import com.amanda.transacoes.models.TransacaoModel;
 import com.amanda.transacoes.repositories.TransacaoRepository;
+import com.amanda.transacoes.utils.TransacaoModelUtils;
 import com.amanda.transacoes.validators.TransacaoValidator;
 
 @ExtendWith(MockitoExtension.class)
@@ -76,17 +77,13 @@ class TransacaoServiceTest {
     void setUp() {
         transacaoDtoCredito = new TransacaoDto("159001", "159002", 100.0, OperacaoEnum.CREDITO, TipoOperacaoEnum.PIX, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4"));
         
-        transacaoModelCredito = new TransacaoModel("159001", "159002", 100.0, OperacaoEnum.CREDITO, TipoOperacaoEnum.PIX, SituacaoOperacaoEnum.CONCLUIDO, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4"));
-        transacaoModelCredito.setId(UUID.randomUUID());
-        transacaoModelCredito2 = new TransacaoModel("159001", "XXXXXX", 1500.0, OperacaoEnum.CREDITO, TipoOperacaoEnum.PIX, SituacaoOperacaoEnum.CONCLUIDO, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4"));
-        transacaoModelCredito2.setId(UUID.randomUUID());
+        transacaoModelCredito =  TransacaoModelUtils.createTransacao(UUID.randomUUID(), "159001", "159002", 100.0, OperacaoEnum.CREDITO, TipoOperacaoEnum.PIX, SituacaoOperacaoEnum.CONCLUIDO, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4"));
+        transacaoModelCredito2 = TransacaoModelUtils.createTransacao(UUID.randomUUID(), "159001", "XXXXXX", 1500.0, OperacaoEnum.CREDITO, TipoOperacaoEnum.PIX, SituacaoOperacaoEnum.CONCLUIDO, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4"));
 
         transacaoDtoDebito = new TransacaoDto("159002", "159001", 100.0, OperacaoEnum.DEBITO, TipoOperacaoEnum.TED, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4"));
         
-        transacaoModelDebito = new TransacaoModel("159002", "159001", 100.0, OperacaoEnum.DEBITO, TipoOperacaoEnum.TED, SituacaoOperacaoEnum.CONCLUIDO, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4"));
-        transacaoModelDebito.setId(UUID.randomUUID());
-        transacaoModelDebito2 = new TransacaoModel("XXXXXX", "159001", 100.0, OperacaoEnum.DEBITO, TipoOperacaoEnum.TED, SituacaoOperacaoEnum.CONCLUIDO, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4"));
-        transacaoModelDebito2.setId(UUID.randomUUID());
+        transacaoModelDebito = TransacaoModelUtils.createTransacao(UUID.randomUUID(), "159002", "159001", 100.0, OperacaoEnum.DEBITO, TipoOperacaoEnum.TED, SituacaoOperacaoEnum.CONCLUIDO, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4"));
+        transacaoModelDebito2 = TransacaoModelUtils.createTransacao(UUID.randomUUID(), "XXXXXX", "159001", 100.0, OperacaoEnum.DEBITO, TipoOperacaoEnum.TED, SituacaoOperacaoEnum.CONCLUIDO, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4"));
         
         clienteId = UUID.randomUUID();
         clienteModel = new ClienteModel("Cliente Teste", "330.510.330-22", "159001", true, 1000.0);
