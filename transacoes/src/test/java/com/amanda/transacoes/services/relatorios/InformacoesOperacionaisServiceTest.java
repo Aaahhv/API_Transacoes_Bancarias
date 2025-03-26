@@ -40,11 +40,11 @@ public class InformacoesOperacionaisServiceTest {
         transacoes.add(new TransacaoModel("159001", "159002", 5, OperacaoEnum.CREDITO, TipoOperacaoEnum.PIX, SituacaoOperacaoEnum.CONCLUIDO, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4")));
         transacoes.add(new TransacaoModel("159001", "159002", 10.0, OperacaoEnum.CREDITO, TipoOperacaoEnum.PIX, SituacaoOperacaoEnum.CONCLUIDO, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4")));
         transacoes.add(new TransacaoModel("159001", "159003", 20.0, OperacaoEnum.CREDITO, TipoOperacaoEnum.TED, SituacaoOperacaoEnum.CONCLUIDO, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4")));
-        transacoes.add(new TransacaoModel("159004", "", 40.0, OperacaoEnum.CREDITO, TipoOperacaoEnum.DEPOSITO, SituacaoOperacaoEnum.CANCELADO, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4")));
-        transacoes.add(new TransacaoModel("159002", "", 80.0, OperacaoEnum.DEBITO, TipoOperacaoEnum.SAQUE, SituacaoOperacaoEnum.CONCLUIDO, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4")));
-        transacoes.add(new TransacaoModel("159002", "159001", 160, OperacaoEnum.DEBITO, TipoOperacaoEnum.TED, SituacaoOperacaoEnum.PENDENTE, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4")));
-        transacoes.add(new TransacaoModel("XXXXXX", "159001", 320, OperacaoEnum.DEBITO, TipoOperacaoEnum.DOC, SituacaoOperacaoEnum.CONCLUIDO, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4")));
-        transacoes.add(new TransacaoModel("159008", "", 640.0, OperacaoEnum.DEBITO, TipoOperacaoEnum.DEPOSITO, SituacaoOperacaoEnum.CONCLUIDO, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4")));
+        transacoes.add(new TransacaoModel("", "159004", 40.0, OperacaoEnum.CREDITO, TipoOperacaoEnum.DEPOSITO, SituacaoOperacaoEnum.CANCELADO, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4")));
+        transacoes.add(new TransacaoModel("159002", null, 80.0, OperacaoEnum.DEBITO, TipoOperacaoEnum.SAQUE, SituacaoOperacaoEnum.CONCLUIDO, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4")));
+        transacoes.add(new TransacaoModel("XXXXXX", "159001", 160, OperacaoEnum.DEBITO, TipoOperacaoEnum.TED, SituacaoOperacaoEnum.PENDENTE, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4")));
+        transacoes.add(new TransacaoModel(null, "159001", 320, OperacaoEnum.DEBITO, TipoOperacaoEnum.DOC, SituacaoOperacaoEnum.CONCLUIDO, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4")));
+        transacoes.add(new TransacaoModel("159008", "XXXXXX", 640.0, OperacaoEnum.DEBITO, TipoOperacaoEnum.DEPOSITO, SituacaoOperacaoEnum.CONCLUIDO, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4")));
         transacoes.add(new TransacaoModel("159004", "", 1280.0, OperacaoEnum.DEBITO, TipoOperacaoEnum.DEPOSITO, SituacaoOperacaoEnum.CONCLUIDO, UUID.fromString("b3f8c1e6-5e3a-4a0b-9b34-3f2c1b37a9e4")));
     
         mes = YearMonth.of(2024, 12);
