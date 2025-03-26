@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -52,6 +53,7 @@ public class InformacoesOperacionaisServiceTest {
     }
  
     @Test
+    @DisplayName("Nesse teste, o relatorio deve conter apenas operacoes marcadas com SituacaoOperacaoEnum.CONCLUIDO")
     void testGetOperacoes_TransacoesExistem_DeveRetornarRelatorioCorreto() {
         RelatorioOperacionalDto relatorio = informacoesOperacionaisService.getOperacoes(mes);
 
@@ -63,6 +65,7 @@ public class InformacoesOperacionaisServiceTest {
     }
 
     @Test
+    @DisplayName("Nesse teste, o relatorio deve conter apenas operacoes marcadas com SituacaoOperacaoEnum.CONCLUIDO")
     void testGetTipoOperacoes_TransacoesExistem_DeveRetornarRelatorioCorreto() {
         RelatorioOperacionalDto relatorio = informacoesOperacionaisService.getTipoOperacoes(mes);
 
