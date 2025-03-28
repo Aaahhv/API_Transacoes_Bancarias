@@ -32,7 +32,7 @@ public class TransacaoModel {
     private String ccDestino;
 
     @CreationTimestamp
-    private LocalDateTime data;
+    private LocalDateTime dataTransacao;
 
     @Column(nullable = false)
     private double valor;
@@ -86,12 +86,12 @@ public class TransacaoModel {
         this.ccDestino = ccDestino;
     }
     
-    public LocalDateTime getData() {
-        return data;
+    public LocalDateTime getDataTransacao() {
+        return dataTransacao;
     }
 
-    public void setData(LocalDateTime data) {
-        this.data = data;
+    public void setDataTransacao(LocalDateTime dataTransacao) {
+        this.dataTransacao = dataTransacao;
     }
 
     public double getValor() {
