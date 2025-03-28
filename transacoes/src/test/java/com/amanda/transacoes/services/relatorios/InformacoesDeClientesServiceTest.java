@@ -1,6 +1,7 @@
 package com.amanda.transacoes.services.relatorios;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
@@ -9,12 +10,15 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -70,7 +74,7 @@ public class InformacoesDeClientesServiceTest {
         ClienteModel cliente1 = new ClienteModel("Amanda Souza", "591.460.470-26", "159001", true, 1000.0);
         ClienteModel cliente2 = new ClienteModel("Yuri", "619.279.430-86", "159002", true, 1000.0);
         ClienteModel cliente3 = new ClienteModel("Gabriel Ferreira", "970.399.040-12", "159003", true, 1000.0);
-        ClienteModel cliente4 = new ClienteModel("Caneca Azul", "695.390.250-79", "159004", true, 1000.0);
+        ClienteModel cliente4 = new ClienteModel("Caneca Azul", "695.390.250-79", "159004", false, 1000.0);
         
         clientes.add(cliente1);
         clientes.add(cliente2);
@@ -99,25 +103,35 @@ public class InformacoesDeClientesServiceTest {
     }
 
     @Test
-    void getQuantidadeClientesAtivos_EntradaValida_DeveRetornarQuantidadeCorreta() {
+    void getQuantidadeClientesAtivos_EntradaValida_DeveRetornarQuantidadeCorretaDeClientesAtivos() {
         Map<String, Integer> quantidade = informacoesDeClienteService.getQuantidadeClientesAtivos();
 
-        assertEquals(4, quantidade.get("Quantidade de clientes ativos"));
+        assertEquals(3, quantidade.get("Quantidade de clientes ativos"));
     }
 
     @Test
-    void getQuantidadeDeTipoOperacaoPorCliente_EntradaValida_DeveRetornarQuantidadePorCliente() {
+    @DisplayName("Nesse teste, a string XXXXXX nao deve ser considerada uma numConta e nao deve aparecer no relatorio")
+    void getQuantidadeDeTipoOperacaoPorCliente_EntradaValida_DeveRetornarUmaListaDeClienteETiposOperacaoDtoValida() {
         List<ClienteETiposOperacaoDto> relatorioDto = informacoesDeClienteService.getQuantidadeDeTipoOperacaoPorCliente();
 
-        for(ClienteETiposOperacaoDto clienteDto : relatorioDto){
-            if(clienteDto.getCliente().getNumConta().equals("159001")){
-                
-            assertEquals(2, clienteDto.getTipoOperacao().get(TipoOperacaoEnum.TED));
-            assertEquals(2, clienteDto.getTipoOperacao().get(TipoOperacaoEnum.PIX));
-            assertEquals(1, clienteDto.getTipoOperacao().get(TipoOperacaoEnum.DOC));
-            }
-        }
-        assertEquals(4, relatorioDto.size());
+        ClienteETiposOperacaoDto clienteEtiposOperacao = relatorioDto.stream()
+            .filter(dto -> dto.getCliente().getNumConta().equals("159001"))
+            .findFirst()
+            .orElse(null);
+
+        assertEquals(2, clienteEtiposOperacao.getTipoOperacao().get(TipoOperacaoEnum.TED));
+        assertEquals(2, clienteEtiposOperacao.getTipoOperacao().get(TipoOperacaoEnum.PIX));
+        assertEquals(1, clienteEtiposOperacao.getTipoOperacao().get(TipoOperacaoEnum.DOC));
+        assertEquals(null, clienteEtiposOperacao.getTipoOperacao().get(TipoOperacaoEnum.SAQUE));
+        assertEquals(null, clienteEtiposOperacao.getTipoOperacao().get(TipoOperacaoEnum.DEPOSITO));
+
+        
+        ClienteETiposOperacaoDto clienteEtiposOperacaoNull = relatorioDto.stream()
+            .filter(dto -> dto.getCliente().getNumConta().equals("XXXXXX"))
+            .findFirst()
+            .orElse(null);
+
+        assertNull(clienteEtiposOperacaoNull);
     }
 
     @Test
@@ -142,22 +156,31 @@ public class InformacoesDeClientesServiceTest {
     }
 
     @Test
-    void getExtratoClientePorDia_EntradaValida_DeveRetornarExtratoOrdenado() {
-        PeriodoDataDto periodo = new PeriodoDataDto(LocalDateTime.of(2024, 4, 15, 12, 30), LocalDateTime.of(2024, 8, 15, 12, 30));
+    void getExtratoClientePorDiaDurantePeriodo_EntradaValida_DeveRetornarExtratoOrdenadoPorDiaEPorHora() {
+        PeriodoDataDto periodo = new PeriodoDataDto(LocalDateTime.of(2024, 4, 15, 12, 30), LocalDateTime.of(2024, 10, 15, 12, 30));
 
-        List<TransacaoModel> transacoesNoPeriodo = List.of(transacoes.get(0), transacoes.get(2), transacoes.get(5));
-        when(transacaoRepository.findByDataTransacaoBetween(LocalDateTime.of(2024, 4, 15, 12, 30), LocalDateTime.of(2024, 8, 15, 12, 30))).thenReturn(transacoesNoPeriodo);
+        List<TransacaoModel> transacoesNoPeriodo = List.of(transacoes.get(6),  transacoes.get(0), transacoes.get(5), transacoes.get(2), transacoes.get(1));
+        when(transacaoRepository.findByDataTransacaoBetween(LocalDateTime.of(2024, 4, 15, 12, 30), LocalDateTime.of(2024, 10, 15, 12, 30))).thenReturn(transacoesNoPeriodo);
 
         Map<String, Map<LocalDate, List<TransacaoModel>>> resultado = informacoesDeClienteService.getExtratoClientePorDiaDurantePeriodo("159001", periodo);
-        List<TransacaoModel> transacoesOrdenadas = resultado.get("159001").get(LocalDate.of(2024, 4, 15));
+        
+        //verifica se as transacoes estão ordenadas por dia:
+        List<LocalDate> dias = new ArrayList<>(resultado.get("159001").keySet());
 
-        for(int i = 0; i < transacoesOrdenadas.size() - 1; i++){
-            LocalDateTime dataAtual = transacoesOrdenadas.get(i).getDataTransacao();
-            LocalDateTime dataSeguinte= transacoesOrdenadas.get(i + 1).getDataTransacao();
+        List<LocalDate> diasOrdenados = new ArrayList<>(dias);
+        diasOrdenados.sort(Comparator.naturalOrder());
 
-            assertTrue(dataAtual.isBefore(dataSeguinte) || dataAtual.equals(dataSeguinte));
-        }
+        assertEquals(diasOrdenados, dias);
 
-        assertTrue(resultado.containsKey("159001"));
+        //verifica se as transacoes estão ordenadas dentro do dia 2024-04-15:
+        List<TransacaoModel> transacoesDeAbrilNoDiaQuinze = resultado.get("159001").get(LocalDate.of(2024, 4, 15));
+        List<LocalDateTime> horarioTransacoesNoDia = transacoesDeAbrilNoDiaQuinze.stream()
+            .map(TransacaoModel::getDataTransacao)
+            .collect(Collectors.toList());
+
+        List<LocalDateTime> transacoesNoDiaOrdenadas = new ArrayList<>(horarioTransacoesNoDia);
+        transacoesNoDiaOrdenadas.sort(Comparator.naturalOrder());
+
+        assertEquals(horarioTransacoesNoDia, transacoesNoDiaOrdenadas);
     }
 }
