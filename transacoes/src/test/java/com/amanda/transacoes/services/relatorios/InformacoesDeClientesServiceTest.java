@@ -1,6 +1,7 @@
 package com.amanda.transacoes.services.relatorios;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.lenient;
@@ -114,16 +115,16 @@ public class InformacoesDeClientesServiceTest {
     void getQuantidadeDeTipoOperacaoPorCliente_EntradaValida_DeveRetornarUmaListaDeClienteETiposOperacaoDtoValida() {
         List<ClienteETiposOperacaoDto> relatorioDto = informacoesDeClienteService.getQuantidadeDeTipoOperacaoPorCliente();
 
-        ClienteETiposOperacaoDto clienteEtiposOperacao = relatorioDto.stream()
+        Optional<ClienteETiposOperacaoDto> clienteEtiposOperacao = relatorioDto.stream()
             .filter(dto -> dto.getCliente().getNumConta().equals("159001"))
-            .findFirst()
-            .orElse(null);
+            .findFirst();
 
-        assertEquals(2, clienteEtiposOperacao.getTipoOperacao().get(TipoOperacaoEnum.TED));
-        assertEquals(2, clienteEtiposOperacao.getTipoOperacao().get(TipoOperacaoEnum.PIX));
-        assertEquals(1, clienteEtiposOperacao.getTipoOperacao().get(TipoOperacaoEnum.DOC));
-        assertEquals(null, clienteEtiposOperacao.getTipoOperacao().get(TipoOperacaoEnum.SAQUE));
-        assertEquals(null, clienteEtiposOperacao.getTipoOperacao().get(TipoOperacaoEnum.DEPOSITO));
+        assertTrue(clienteEtiposOperacao.isPresent());
+        assertEquals(2, clienteEtiposOperacao.get().getTipoOperacao().get(TipoOperacaoEnum.TED));
+        assertEquals(2, clienteEtiposOperacao.get().getTipoOperacao().get(TipoOperacaoEnum.PIX));
+        assertEquals(1, clienteEtiposOperacao.get().getTipoOperacao().get(TipoOperacaoEnum.DOC));
+        assertEquals(null, clienteEtiposOperacao.get().getTipoOperacao().get(TipoOperacaoEnum.SAQUE));
+        assertEquals(null, clienteEtiposOperacao.get().getTipoOperacao().get(TipoOperacaoEnum.DEPOSITO));
 
         
         ClienteETiposOperacaoDto clienteEtiposOperacaoNull = relatorioDto.stream()
