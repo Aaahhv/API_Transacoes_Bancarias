@@ -4,6 +4,7 @@ import org.springframework.stereotype.Repository;
 
 import com.amanda.transacoes.models.TransacaoModel;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,4 +26,7 @@ public interface TransacaoRepository extends JpaRepository<TransacaoModel, UUID>
     boolean existsById(UUID id);
 
     void deleteById (UUID id);
+
+    List<TransacaoModel> findByDataTransacaoBetween(LocalDateTime inicio, LocalDateTime fim);
+
 }
